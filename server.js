@@ -14,10 +14,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Shared AI helper
 async function aiComplete(systemPrompt, userPrompt, maxTokens = 1024) {
   const key = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
+  if (!key) throw new Error('No API key configured. Set GROQ_API_KEY or OPENAI_API_KEY env var.');
+  
   const baseUrl = process.env.GROQ_API_KEY 
     ? 'https://api.groq.com/openai/v1' 
     : 'https://api.openai.com/v1';
-  const model = process.env.GROQ_API_KEY ? 'mixtral-8x7b-32768' : 'gpt-4o-mini';
+  const model = process.env.MODEL || (process.env.GROQ_API_KEY ? 'mixtral-8x7b-32768' : 'gpt-4o-mini');
+  
+  console.log(`[AI] Calling ${baseUrl} with model ${model}`);
   
   const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
@@ -29,7 +33,13 @@ async function aiComplete(systemPrompt, userPrompt, maxTokens = 1024) {
       max_tokens: maxTokens
     })
   });
-  if (!res.ok) throw new Error(`AI API error: ${res.status}`);
+  
+  if (!res.ok) {
+    const errBody = await res.text();
+    console.error(`[AI ERROR] Status ${res.status}: ${errBody}`);
+    throw new Error(`AI API error ${res.status}: ${errBody.slice(0, 200)}`);
+  }
+  
   const data = await res.json();
   return data.choices[0].message.content;
 }
@@ -65,7 +75,7 @@ app.post('/portfolio-roaster/api/roast', async (req, res) => {
       `Roast this portfolio. Page content: ${text}`, 800
     );
     res.json(parseJSON(result));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[portfolio-roaster] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Day 6: Regex Tester (AI explain)
@@ -77,7 +87,7 @@ app.post('/regex-tester/api/explain', async (req, res) => {
       `Regex: ${regex}`, 500
     );
     res.json({ explanation: result });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Day 7: Cold Email
@@ -89,7 +99,7 @@ app.post('/cold-email/api/personalize', async (req, res) => {
       `Prospect: ${JSON.stringify(prospect)}. Sender: ${JSON.stringify(sender)}`, 800
     );
     res.json(parseJSON(result));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Day 8: Code Review
@@ -102,7 +112,7 @@ app.post('/code-review/api/review', async (req, res) => {
       truncated, 1024
     );
     res.json(parseJSON(result));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Day 9: SQL Explainer
@@ -114,7 +124,7 @@ app.post('/sql-explainer/api/explain', async (req, res) => {
       sql, 1024
     );
     res.json(parseJSON(result));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Day 10: Salary Negotiation
@@ -126,7 +136,7 @@ app.post('/salary-negotiation/api/script', async (req, res) => {
       JSON.stringify(data), 1024
     );
     res.json(parseJSON(result));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Day 11: Interview Questions
@@ -138,7 +148,7 @@ app.post('/interview-questions/api/generate', async (req, res) => {
       `JD: ${(jd || '').slice(0, 3000)}. Level: ${level}. Type: ${type}. Company: ${company}`, 2048
     );
     res.json(parseJSONArray(result));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Day 12: README Generator
@@ -160,7 +170,7 @@ app.post('/readme-generator/api/generate', async (req, res) => {
       context, 2048
     );
     res.json({ readme: result });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Day 13: Standup Generator
@@ -172,7 +182,7 @@ app.post('/standup-generator/api/standup', async (req, res) => {
       `Yesterday: ${yesterday}. Today: ${today}. Blockers: ${blockers || 'None'}. Team: ${team || ''}`, 600
     );
     res.json(parseJSON(result));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Day 14: Tech Stack Detector (no AI)
@@ -204,7 +214,7 @@ app.post('/tech-stack-detector/api/detect', async (req, res) => {
     if (meta.includes('WordPress')) techs.push({ category: 'Backend', name: 'WordPress', confidence: 'definite', evidence: 'Generator meta tag' });
     if (scripts.includes('jquery') || scripts.includes('jQuery')) techs.push({ category: 'Frontend', name: 'jQuery', confidence: 'definite', evidence: 'jQuery script' });
     res.json({ techs, headers });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Day 15: Dev Excuse
@@ -216,7 +226,7 @@ app.post('/dev-excuse/api/excuse', async (req, res) => {
       `Situation: ${situation}`, 400
     );
     res.json(parseJSON(result));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Day 18: Startup Validator
@@ -228,7 +238,7 @@ app.post('/startup-validator/api/validate', async (req, res) => {
       idea, 1500
     );
     res.json(parseJSON(result));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 app.post('/startup-validator/api/stress-test', async (req, res) => {
@@ -239,7 +249,7 @@ app.post('/startup-validator/api/stress-test', async (req, res) => {
       idea, 500
     );
     res.json(parseJSON(result));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Day 20: Dev Jokes
@@ -251,7 +261,7 @@ app.post('/dev-jokes/api/joke', async (req, res) => {
       'Generate one joke.', 300
     );
     res.json(parseJSON(result));
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(`[API ERROR] ${e.message}`); res.status(500).json({ error: e.message }); }
 });
 
 // Serve each project's static files
@@ -275,4 +285,8 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`21-Day Builds running on http://localhost:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`21-Day Builds running on http://localhost:${PORT}`);
+  console.log(`GROQ_API_KEY: ${process.env.GROQ_API_KEY ? '✓ set (' + process.env.GROQ_API_KEY.slice(0,8) + '...)' : '✗ not set'}`);
+  console.log(`OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? '✓ set' : '✗ not set'}`);
+});
