@@ -68,11 +68,31 @@ app.post('/portfolio-roaster/api/roast', async (req, res) => {
     const { url } = req.body;
     if (!url) return res.status(400).json({ error: 'URL required' });
     const fetchMod = await import('node-fetch');
-    const html = await (await fetchMod.default(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 10000 })).text();
-    const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 5000);
+    const resp = await fetchMod.default(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }, timeout: 10000 });
+    const html = await resp.text();
+    // Extract meaningful content: title, meta, visible text, script frameworks, links
+    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+    const metaDesc = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
+    const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']*)["']/i);
+    const ogDesc = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']*)["']/i);
+    const text = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 4000);
+    const isSPA = html.includes('__NEXT_DATA__') || html.includes('gatsby') || html.includes('_app') || html.includes('react') || html.includes('vue');
+    
+    const context = `URL: ${url}
+Title: ${titleMatch?.[1] || 'None'}
+Meta Description: ${metaDesc?.[1] || 'None'}
+OG Title: ${ogTitle?.[1] || 'None'}  
+OG Description: ${ogDesc?.[1] || 'None'}
+Is SPA/JS-rendered: ${isSPA ? 'Yes (content loads via JavaScript - evaluate based on meta tags, structure, and what you can infer)' : 'No'}
+Page text content: ${text || '(Minimal - likely JS-rendered SPA)'}
+Raw HTML length: ${html.length} chars
+Has structured data: ${html.includes('application/ld+json')}`;
+
+    console.log(`[portfolio-roaster] Fetched ${url}, HTML: ${html.length} chars, SPA: ${isSPA}`);
+    
     const result = await aiComplete(
-      'You are a brutally honest portfolio reviewer. Return JSON: { "overall_score": number 0-100, "roast_summary": "string", "sections": [{"name":"Design","score":0-100,"roast":"string","fix":"string"},{"name":"Content","score":0-100,"roast":"string","fix":"string"},{"name":"UX","score":0-100,"roast":"string","fix":"string"},{"name":"Mobile","score":0-100,"roast":"string","fix":"string"},{"name":"CTA","score":0-100,"roast":"string","fix":"string"}] }',
-      `Roast this portfolio. Page content: ${text}`, 800
+      `You are a brutally honest portfolio reviewer. The user submitted their portfolio URL. If the site is a JavaScript SPA (React/Gatsby/Next.js), acknowledge that you're evaluating based on meta tags, page structure, and available signals — don't penalize for "no content" if it's clearly a JS-rendered app. Return JSON: { "overall_score": number 0-100, "roast_summary": "string", "sections": [{"name":"Design","score":0-100,"roast":"string","fix":"string"},{"name":"Content","score":0-100,"roast":"string","fix":"string"},{"name":"UX","score":0-100,"roast":"string","fix":"string"},{"name":"Mobile","score":0-100,"roast":"string","fix":"string"},{"name":"CTA","score":0-100,"roast":"string","fix":"string"}] }`,
+      context, 800
     );
     res.json(parseJSON(result));
   } catch (e) { console.error(`[portfolio-roaster] ${e.message}`); res.status(500).json({ error: e.message }); }
