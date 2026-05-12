@@ -19,7 +19,7 @@ async function aiComplete(systemPrompt, userPrompt, maxTokens = 1024) {
   const baseUrl = process.env.GROQ_API_KEY 
     ? 'https://api.groq.com/openai/v1' 
     : 'https://api.openai.com/v1';
-  const model = process.env.MODEL || (process.env.GROQ_API_KEY ? 'mixtral-8x7b-32768' : 'gpt-4o-mini');
+  const model = process.env.MODEL || (process.env.GROQ_API_KEY ? 'llama-3.3-70b-versatile' : 'gpt-4o-mini');
   
   console.log(`[AI] Calling ${baseUrl} with model ${model}`);
   
