@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #0f0f1a; color: #e0e0e0; min-height: 100vh; }
+    .hero { text-align: center; padding: 60px 20px 40px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+    .hero h1 { font-size: 2.8rem; font-weight: 700; background: linear-gradient(90deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { color: #8892b0; font-size: 1.1rem; margin-top: 10px; font-weight: 300; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+    .input-section { background: #1a1a2e; border-radius: 16px; padding: 32px; border: 1px solid #2a2a4a; }
+    label { font-weight: 500; font-size: 0.9rem; color: #a0a0c0; display: block; margin-bottom: 8px; }
+    input, textarea { width: 100%; padding: 14px 18px; border-radius: 10px; border: 1px solid #2a2a4a; background: #0f0f1a; color: #e0e0e0; font-family: 'Poppins', sans-serif; font-size: 0.95rem; transition: border-color 0.2s; }
+    input:focus, textarea:focus { outline: none; border-color: #667eea; }
+    textarea { resize: vertical; min-height: 120px; }
+    .divider { text-align: center; color: #555; margin: 16px 0; font-size: 0.85rem; }
+    .btn { padding: 14px 32px; border: none; border-radius: 10px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 1rem; cursor: pointer; transition: transform 0.15s, opacity 0.2s; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; width: 100%; margin-top: 20px; }
+    .btn-sm { padding: 10px 20px; font-size: 0.85rem; }
+    .btn-copy { background: #2a2a4a; color: #e0e0e0; }
+    .btn-download { background: linear-gradient(135deg, #11998e, #38ef7d); color: #0f0f1a; }
+    .results { display: none; margin-top: 40px; }
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+    .results-header h2 { font-size: 1.3rem; font-weight: 600; }
+    .actions { display: flex; gap: 10px; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 768px) { .split { grid-template-columns: 1fr; } }
+    .panel { background: #1a1a2e; border-radius: 12px; border: 1px solid #2a2a4a; overflow: hidden; }
+    .panel-header { padding: 12px 18px; background: #2a2a4a; font-size: 0.8rem; font-weight: 500; color: #a0a0c0; text-transform: uppercase; letter-spacing: 1px; }
+    .preview { padding: 24px; overflow-y: auto; max-height: 600px; line-height: 1.7; }
+    .preview h1, .preview h2, .preview h3 { color: #fff; margin: 16px 0 8px; }
+    .preview h1 { font-size: 1.6rem; } .preview h2 { font-size: 1.3rem; } .preview h3 { font-size: 1.1rem; }
+    .preview p { margin-bottom: 12px; }
+    .preview code { background: #2a2a4a; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
+    .preview pre { background: #0f0f1a; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 12px 0; }
+    .preview pre code { background: none; padding: 0; }
+    .preview ul, .preview ol { padding-left: 24px; margin-bottom: 12px; }
+    .preview a { color: #667eea; }
+    .raw-textarea { width: 100%; min-height: 560px; padding: 18px; border: none; background: #0f0f1a; color: #e0e0e0; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; resize: vertical; outline: none; }
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #fff3; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 8px; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast { position: fixed; bottom: 30px; right: 30px; background: #667eea; color: #fff; padding: 12px 24px; border-radius: 8px; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <h1>README Generator</h1>
+    <p>Generate professional README files from GitHub repos or pasted code — powered by AI</p>
+  </section>
+
+  <div class="container">
+    <div class="input-section">
+      <label for="repoUrl">GitHub Repository URL</label>
+      <input id="repoUrl" type="url" placeholder="https://github.com/user/repo">
+      <div class="divider">— OR —</div>
+      <label for="codeInput">Paste code / file structure</label>
+      <textarea id="codeInput" placeholder="Paste your project's file tree, code snippets, or description here..."></textarea>
+      <button class="btn btn-primary" id="generateBtn" onclick="generate()">Generate README</button>
+    </div>
+
+    <div class="results" id="results">
+      <div class="results-header">
+        <h2>Generated README</h2>
+        <div class="actions">
+          <button class="btn btn-sm btn-copy" onclick="copyMd()">Copy Markdown</button>
+          <button class="btn btn-sm btn-download" onclick="downloadMd()">Download .md</button>
+        </div>
+      </div>
+      <div class="split">
+        <div class="panel">
+          <div class="panel-header">Preview</div>
+          <div class="preview" id="preview"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">Raw Markdown (editable)</div>
+          <textarea class="raw-textarea" id="rawMd" oninput="updatePreview()"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Copied to clipboard!</div>
+
+  <script>
+    async function generate() {
+      const btn = document.getElementById('generateBtn');
+      const url = document.getElementById('repoUrl').value.trim();
+      const code = document.getElementById('codeInput').value.trim();
+      if (!url && !code) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Generating...';
+
+      try {
+        const res = await fetch('/readme-generator/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url || undefined, code: code || undefined })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        document.getElementById('rawMd').value = data.markdown;
+        updatePreview();
+        document.getElementById('results').style.display = 'block';
+        document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+      } catch (e) {
+        alert('Error: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate README';
+      }
+    }
+
+    function updatePreview() {
+      document.getElementById('preview').innerHTML = marked.parse(document.getElementById('rawMd').value);
+    }
+
+    function copyMd() {
+      navigator.clipboard.writeText(document.getElementById('rawMd').value);
+      const t = document.getElementById('toast');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    function downloadMd() {
+      const blob = new Blob([document.getElementById('rawMd').value], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'README.md';
+      a.click();
+    }
+  </script>
+</body>
+</html>

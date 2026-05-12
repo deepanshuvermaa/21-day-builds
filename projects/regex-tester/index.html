@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regex Tester — AI Explanation</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:#0f0f13;color:#e4e4e7;min-height:100vh}
+.hero{text-align:center;padding:60px 20px 40px;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)}
+.hero h1{font-size:2.4rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:#a1a1aa;margin-top:10px;font-size:1.05rem;max-width:600px;margin-inline:auto}
+.container{max-width:1400px;margin:0 auto;padding:30px 20px}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:900px){.panels{grid-template-columns:1fr}}
+.panel{background:#1a1a2e;border:1px solid #2a2a3e;border-radius:12px;padding:24px}
+.panel h3{font-size:.85rem;text-transform:uppercase;letter-spacing:1px;color:#667eea;margin-bottom:12px}
+.regex-input{width:100%;background:#0f0f13;border:1px solid #2a2a3e;border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:.95rem;color:#e4e4e7;outline:none;transition:border-color .2s}
+.regex-input:focus{border-color:#667eea}
+.error-msg{color:#f87171;font-size:.8rem;margin-top:6px;min-height:1.2em}
+.flags{display:flex;gap:16px;margin-top:12px}
+.flags label{display:flex;align-items:center;gap:6px;font-size:.85rem;color:#a1a1aa;cursor:pointer}
+.flags input[type=checkbox]{accent-color:#667eea}
+textarea{width:100%;min-height:180px;background:#0f0f13;border:1px solid #2a2a3e;border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:.9rem;color:#e4e4e7;resize:vertical;outline:none;margin-top:16px;transition:border-color .2s}
+textarea:focus{border-color:#667eea}
+.highlight-area{background:#0f0f13;border:1px solid #2a2a3e;border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:.9rem;min-height:180px;white-space:pre-wrap;word-break:break-all;line-height:1.6}
+.match-list{margin-top:16px;max-height:200px;overflow-y:auto}
+.match-item{background:#0f0f13;border:1px solid #2a2a3e;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-family:'JetBrains Mono',monospace;font-size:.8rem}
+.match-item .idx{color:#667eea;font-weight:500}
+.match-item .val{color:#34d399}
+.match-item .grp{color:#fbbf24;margin-left:12px}
+.hl-0{background:#667eea40;border-radius:2px;padding:1px 0}
+.hl-1{background:#f59e0b40;border-radius:2px;padding:1px 0}
+.hl-2{background:#10b98140;border-radius:2px;padding:1px 0}
+.hl-3{background:#ef444440;border-radius:2px;padding:1px 0}
+.hl-4{background:#8b5cf640;border-radius:2px;padding:1px 0}
+.btn{padding:10px 20px;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-weight:500;cursor:pointer;font-size:.85rem;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-secondary{background:#2a2a3e;color:#e4e4e7}
+.btn-secondary:hover{background:#3a3a4e}
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.explain-panel{margin-top:16px;background:#0f0f13;border:1px solid #2a2a3e;border-radius:8px;padding:16px;display:none;animation:slideIn .3s ease}
+.explain-panel.show{display:block}
+.explain-panel pre{white-space:pre-wrap;font-family:'JetBrains Mono',monospace;font-size:.85rem;color:#a1a1aa;line-height:1.6}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.presets{margin-top:30px}
+.presets h3{font-size:.85rem;text-transform:uppercase;letter-spacing:1px;color:#667eea;margin-bottom:12px}
+.preset-grid{display:flex;flex-wrap:wrap;gap:8px}
+.preset-btn{padding:6px 14px;background:#1a1a2e;border:1px solid #2a2a3e;border-radius:6px;color:#a1a1aa;font-size:.78rem;cursor:pointer;transition:all .2s;font-family:'Poppins',sans-serif}
+.preset-btn:hover{border-color:#667eea;color:#e4e4e7}
+.export-modal{display:none;position:fixed;inset:0;background:#000a;z-index:100;align-items:center;justify-content:center}
+.export-modal.show{display:flex}
+.export-box{background:#1a1a2e;border:1px solid #2a2a3e;border-radius:12px;padding:24px;max-width:500px;width:90%}
+.export-box h3{margin-bottom:12px;color:#667eea}
+.export-box pre{background:#0f0f13;padding:12px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:.85rem;overflow-x:auto;color:#34d399}
+.export-box .actions{margin-top:16px}
+</style>
+</head>
+<body>
+<section class="hero">
+  <h1>Regex Tester</h1>
+  <p>Test regular expressions in real-time with instant highlighting, capture group inspection, and AI-powered explanations.</p>
+</section>
+
+<div class="container">
+  <div class="panels">
+    <div class="panel">
+      <h3>Pattern</h3>
+      <input type="text" id="regexInput" class="regex-input" placeholder="Enter regex pattern..." value="(\w+)@(\w+)\.(\w+)">
+      <div class="error-msg" id="errorMsg"></div>
+      <div class="flags">
+        <label><input type="checkbox" id="flagG" checked> g</label>
+        <label><input type="checkbox" id="flagI"> i</label>
+        <label><input type="checkbox" id="flagM"> m</label>
+        <label><input type="checkbox" id="flagS"> s</label>
+      </div>
+      <textarea id="testString" placeholder="Enter test string...">hello@world.com test@example.org not-an-email</textarea>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="explain()">✨ Explain with AI</button>
+        <button class="btn btn-secondary" onclick="showExport()">Export</button>
+      </div>
+      <div class="explain-panel" id="explainPanel"><pre id="explainText">Loading...</pre></div>
+    </div>
+    <div class="panel">
+      <h3>Matches</h3>
+      <div class="highlight-area" id="highlightArea"></div>
+      <div class="match-list" id="matchList"></div>
+    </div>
+  </div>
+
+  <div class="presets">
+    <h3>Common Patterns</h3>
+    <div class="preset-grid" id="presetGrid"></div>
+  </div>
+</div>
+
+<div class="export-modal" id="exportModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="export-box">
+    <h3>Export Regex</h3>
+    <pre id="exportCode"></pre>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="copyExport()">Copy</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('exportModal').classList.remove('show')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const presets = [
+  {name:'Email',pattern:'[\\w.-]+@[\\w.-]+\\.\\w+',flags:'g'},
+  {name:'URL',pattern:'https?://[\\w.-]+(?:/[\\w./?%&=-]*)?',flags:'g'},
+  {name:'Phone (US)',pattern:'\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}',flags:'g'},
+  {name:'IPv4',pattern:'\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b',flags:'g'},
+  {name:'Date (YYYY-MM-DD)',pattern:'\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])',flags:'g'},
+  {name:'Time (HH:MM)',pattern:'(?:[01]\\d|2[0-3]):[0-5]\\d',flags:'g'},
+  {name:'Hex Color',pattern:'#(?:[0-9a-fA-F]{3}){1,2}\\b',flags:'gi'},
+  {name:'HTML Tag',pattern:'<([a-z][a-z0-9]*)\\b[^>]*>(.*?)</\\1>',flags:'gi'},
+  {name:'Integer',pattern:'-?\\d+',flags:'g'},
+  {name:'Float',pattern:'-?\\d+\\.\\d+',flags:'g'},
+  {name:'Username',pattern:'[a-zA-Z0-9_]{3,16}',flags:'g'},
+  {name:'Password (strong)',pattern:'(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}',flags:''},
+  {name:'Slug',pattern:'[a-z0-9]+(?:-[a-z0-9]+)*',flags:'g'},
+  {name:'Credit Card',pattern:'\\b(?:\\d[ -]*?){13,16}\\b',flags:'g'},
+  {name:'ZIP Code',pattern:'\\b\\d{5}(?:-\\d{4})?\\b',flags:'g'}
+];
+
+const grid=document.getElementById('presetGrid');
+presets.forEach(p=>{
+  const btn=document.createElement('button');
+  btn.className='preset-btn';
+  btn.textContent=p.name;
+  btn.onclick=()=>{
+    document.getElementById('regexInput').value=p.pattern;
+    document.getElementById('flagG').checked=p.flags.includes('g');
+    document.getElementById('flagI').checked=p.flags.includes('i');
+    document.getElementById('flagM').checked=p.flags.includes('m');
+    document.getElementById('flagS').checked=p.flags.includes('s');
+    run();
+  };
+  grid.appendChild(btn);
+});
+
+const colors=['hl-0','hl-1','hl-2','hl-3','hl-4'];
+
+function getFlags(){
+  let f='';
+  if(document.getElementById('flagG').checked)f+='g';
+  if(document.getElementById('flagI').checked)f+='i';
+  if(document.getElementById('flagM').checked)f+='m';
+  if(document.getElementById('flagS').checked)f+='s';
+  return f;
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function run(){
+  const pattern=document.getElementById('regexInput').value;
+  const flags=getFlags();
+  const text=document.getElementById('testString').value;
+  const errEl=document.getElementById('errorMsg');
+  const hlEl=document.getElementById('highlightArea');
+  const mlEl=document.getElementById('matchList');
+
+  errEl.textContent='';
+  if(!pattern){hlEl.innerHTML=escHtml(text);mlEl.innerHTML='';return}
+
+  let re;
+  try{re=new RegExp(pattern,flags)}catch(e){errEl.textContent=e.message;hlEl.innerHTML=escHtml(text);mlEl.innerHTML='';return}
+
+  const matches=[];
+  if(flags.includes('g')){
+    let m;
+    while((m=re.exec(text))!==null){
+      matches.push(m);
+      if(m.index===re.lastIndex)re.lastIndex++;
+    }
+  }else{
+    const m=re.exec(text);
+    if(m)matches.push(m);
+  }
+
+  // Highlight
+  let html='',last=0;
+  matches.forEach((m,i)=>{
+    html+=escHtml(text.slice(last,m.index));
+    html+=`<span class="${colors[i%colors.length]}">${escHtml(m[0])}</span>`;
+    last=m.index+m[0].length;
+  });
+  html+=escHtml(text.slice(last));
+  hlEl.innerHTML=html||escHtml(text);
+
+  // Match list
+  mlEl.innerHTML=matches.map((m,i)=>{
+    let groups='';
+    for(let g=1;g<m.length;g++)groups+=`<span class="grp">Group ${g}: ${escHtml(m[g]||'')}</span> `;
+    return `<div class="match-item"><span class="idx">#${i+1}</span> [${m.index}] <span class="val">${escHtml(m[0])}</span> ${groups}</div>`;
+  }).join('');
+}
+
+async function explain(){
+  const panel=document.getElementById('explainPanel');
+  const txt=document.getElementById('explainText');
+  panel.classList.add('show');
+  txt.textContent='Loading...';
+  try{
+    const res=await fetch('/regex-tester/api/explain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({regex:document.getElementById('regexInput').value,flags:getFlags()})});
+    const data=await res.json();
+    txt.textContent=data.explanation||data.error;
+  }catch(e){txt.textContent='Error: '+e.message}
+}
+
+function showExport(){
+  const p=document.getElementById('regexInput').value;
+  const f=getFlags();
+  document.getElementById('exportCode').textContent=`// JavaScript\nconst regex = /${p}/${f};\n\n# Python\nimport re\npattern = re.compile(r'${p}'${f.includes('i')?', re.IGNORECASE':''}${f.includes('m')?', re.MULTILINE':''}${f.includes('s')?', re.DOTALL':''})`;
+  document.getElementById('exportModal').classList.add('show');
+}
+
+function copyExport(){
+  navigator.clipboard.writeText(document.getElementById('exportCode').textContent);
+}
+
+document.getElementById('regexInput').addEventListener('input',run);
+document.getElementById('testString').addEventListener('input',run);
+document.querySelectorAll('.flags input').forEach(el=>el.addEventListener('change',run));
+run();
+</script>
+</body>
+</html>

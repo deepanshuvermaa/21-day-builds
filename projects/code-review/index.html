@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Review Bot</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:#f8f9fc;color:#1a1a2e;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:2rem}
+header{text-align:center;padding:3rem 0 2rem}
+header h1{font-size:2.2rem;font-weight:700;background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+header p{color:#64748b;margin-top:.5rem;font-size:1.05rem}
+.input-section{background:#fff;border-radius:16px;padding:1.5rem;box-shadow:0 4px 24px rgba(0,0,0,.06);margin-bottom:2rem}
+.controls{display:flex;gap:1rem;margin-bottom:1rem;align-items:center}
+select{font-family:'Poppins',sans-serif;padding:.5rem 1rem;border:1px solid #e2e8f0;border-radius:8px;font-size:.9rem;background:#fff}
+textarea{width:100%;height:280px;font-family:'JetBrains Mono',monospace;font-size:.85rem;padding:1rem;border:1px solid #e2e8f0;border-radius:12px;background:#1e1e2e;color:#e2e8f0;resize:vertical;line-height:1.6}
+textarea::placeholder{color:#64748b}
+button#submit{display:block;width:100%;margin-top:1rem;padding:.85rem;font-family:'Poppins',sans-serif;font-size:1rem;font-weight:600;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:10px;cursor:pointer;transition:opacity .2s}
+button#submit:hover{opacity:.9}
+button#submit:disabled{opacity:.5;cursor:not-allowed}
+.results{display:none}
+.score-card{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-radius:16px;padding:2rem;text-align:center;margin-bottom:1.5rem}
+.score-card .score{font-size:3.5rem;font-weight:700}
+.score-card .summary{margin-top:.5rem;opacity:.9;font-size:.95rem}
+.section-title{font-size:1.1rem;font-weight:600;margin:1.5rem 0 .75rem;color:#1a1a2e}
+.issue{background:#fff;border-radius:12px;padding:1rem 1.25rem;margin-bottom:.75rem;box-shadow:0 2px 12px rgba(0,0,0,.04);border-left:4px solid #e2e8f0}
+.issue.critical{border-left-color:#ef4444}
+.issue.warning{border-left-color:#f59e0b}
+.issue.suggestion{border-left-color:#3b82f6}
+.issue-header{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.4rem}
+.badge{font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:6px;text-transform:uppercase;color:#fff}
+.badge.critical{background:#ef4444}
+.badge.warning{background:#f59e0b}
+.badge.suggestion{background:#3b82f6}
+.badge.category{background:#6366f1}
+.line-num{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:#64748b}
+.issue-desc{font-size:.9rem;color:#334155}
+.issue-fix{font-size:.85rem;color:#6366f1;margin-top:.3rem;font-family:'JetBrains Mono',monospace}
+.positives{background:#f0fdf4;border-radius:12px;padding:1.25rem;margin-top:1rem}
+.positives li{margin:.4rem 0;color:#166534;font-size:.9rem}
+.copy-btn{display:inline-block;margin-top:1.5rem;padding:.6rem 1.2rem;font-family:'Poppins',sans-serif;font-size:.85rem;font-weight:500;background:#1e1e2e;color:#fff;border:none;border-radius:8px;cursor:pointer}
+.copy-btn:hover{background:#2d2d3e}
+.error{background:#fef2f2;color:#dc2626;padding:1rem;border-radius:10px;margin-top:1rem;display:none}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:.5rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚡ Code Review Bot</h1>
+    <p>AI-powered code analysis — get instant feedback on bugs, security, performance & style</p>
+  </header>
+
+  <div class="input-section">
+    <div class="controls">
+      <select id="language">
+        <option value="javascript">JavaScript</option>
+        <option value="typescript">TypeScript</option>
+        <option value="python">Python</option>
+        <option value="go">Go</option>
+        <option value="rust">Rust</option>
+        <option value="java">Java</option>
+      </select>
+    </div>
+    <textarea id="code" placeholder="Paste your code here..."></textarea>
+    <button id="submit">Review Code</button>
+  </div>
+
+  <div class="error" id="error"></div>
+
+  <div class="results" id="results">
+    <div class="score-card">
+      <div class="score" id="score"></div>
+      <div class="summary" id="summary"></div>
+    </div>
+
+    <h3 class="section-title">Issues</h3>
+    <div id="issues"></div>
+
+    <h3 class="section-title">What's Good</h3>
+    <div class="positives"><ul id="positives"></ul></div>
+
+    <button class="copy-btn" id="copy">📋 Copy as Markdown</button>
+  </div>
+</div>
+
+<script>
+let reviewData = null;
+
+document.getElementById('submit').addEventListener('click', async () => {
+  const code = document.getElementById('code').value.trim();
+  if (!code) return;
+  const btn = document.getElementById('submit');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Reviewing...';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('error').style.display = 'none';
+
+  try {
+    const res = await fetch('/code-review/api/review', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, language: document.getElementById('language').value })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    reviewData = data;
+    render(data);
+  } catch (e) {
+    document.getElementById('error').textContent = e.message;
+    document.getElementById('error').style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Review Code';
+  }
+});
+
+function render(data) {
+  document.getElementById('score').textContent = data.score + '/100';
+  document.getElementById('summary').textContent = data.summary;
+
+  const issuesEl = document.getElementById('issues');
+  const order = { critical: 0, warning: 1, suggestion: 2 };
+  const sorted = [...(data.issues || [])].sort((a, b) => order[a.severity] - order[b.severity]);
+  issuesEl.innerHTML = sorted.map(i => `
+    <div class="issue ${i.severity}">
+      <div class="issue-header">
+        <span class="badge ${i.severity}">${i.severity}</span>
+        <span class="badge category">${i.category}</span>
+        <span class="line-num">Line ${i.line}</span>
+      </div>
+      <div class="issue-desc">${i.description}</div>
+      <div class="issue-fix">Fix: ${i.fix}</div>
+    </div>`).join('');
+
+  const posEl = document.getElementById('positives');
+  posEl.innerHTML = (data.positives || []).map(p => `<li>✓ ${p}</li>`).join('');
+
+  document.getElementById('results').style.display = 'block';
+}
+
+document.getElementById('copy').addEventListener('click', () => {
+  if (!reviewData) return;
+  const d = reviewData;
+  let md = `# Code Review — Score: ${d.score}/100\n\n${d.summary}\n\n## Issues\n\n`;
+  d.issues.forEach(i => { md += `- **[${i.severity.toUpperCase()}]** (${i.category}, line ${i.line}) ${i.description}\n  - Fix: ${i.fix}\n`; });
+  md += `\n## Positives\n\n`;
+  d.positives.forEach(p => { md += `- ${p}\n`; });
+  navigator.clipboard.writeText(md);
+  document.getElementById('copy').textContent = '✓ Copied!';
+  setTimeout(() => document.getElementById('copy').textContent = '📋 Copy as Markdown', 2000);
+});
+</script>
+</body>
+</html>

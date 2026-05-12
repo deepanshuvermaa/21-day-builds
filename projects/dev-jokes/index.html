@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Jokes Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:#0f0f1a;color:#e0e0e0;min-height:100vh}
+.container{max-width:800px;margin:0 auto;padding:2rem}
+.hero{text-align:center;padding:3rem 0 2rem}
+.hero h1{font-size:2.8rem;font-weight:800;background:linear-gradient(135deg,#667eea,#764ba2,#f093fb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{color:#888;margin-top:.5rem;font-size:1.1rem}
+.card{background:#1a1a2e;border-radius:16px;padding:2rem;margin:1.5rem 0;border:1px solid #2a2a4a}
+.categories{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
+.cat-btn{padding:.5rem 1rem;border-radius:20px;border:1px solid #3a3a5a;background:transparent;color:#aaa;cursor:pointer;font-family:inherit;font-size:.85rem;transition:.3s}
+.cat-btn:hover,.cat-btn.active{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-color:transparent}
+.slider-wrap{margin:1.5rem 0}
+.slider-wrap label{display:flex;justify-content:space-between;margin-bottom:.5rem;font-size:.9rem;color:#888}
+input[type=range]{width:100%;accent-color:#764ba2;height:6px;cursor:pointer}
+.generate-btn{width:100%;padding:1rem;border:none;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:1.1rem;font-weight:600;cursor:pointer;font-family:inherit;transition:.3s}
+.generate-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(102,126,234,.4)}
+.generate-btn:disabled{opacity:.5;transform:none}
+.flip-container{perspective:1000px;margin:1.5rem 0;min-height:200px;cursor:pointer}
+.flip-card{position:relative;width:100%;min-height:200px;transition:transform .6s;transform-style:preserve-3d}
+.flip-card.flipped{transform:rotateY(180deg)}
+.flip-front,.flip-back{position:absolute;width:100%;min-height:200px;backface-visibility:hidden;border-radius:16px;padding:2rem;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+.flip-front{background:linear-gradient(135deg,#1e1e3a,#2a1a3e);border:1px solid #3a3a5a}
+.flip-back{background:linear-gradient(135deg,#2a1a3e,#1a2a3e);border:1px solid #4a3a6a;transform:rotateY(180deg)}
+.flip-front h3,.flip-back h3{font-size:1.3rem;margin-bottom:.5rem;color:#f093fb}
+.flip-front p,.flip-back p{font-size:1.1rem;line-height:1.6}
+.flip-hint{font-size:.75rem;color:#666;margin-top:1rem}
+.explain-section{margin:1rem 0}
+.explain-toggle{background:#1e1e3a;border:1px solid #3a3a5a;color:#aaa;padding:.75rem 1.2rem;border-radius:10px;cursor:pointer;font-family:inherit;width:100%;text-align:left;font-size:.9rem;transition:.3s}
+.explain-toggle:hover{border-color:#667eea;color:#ccc}
+.explain-content{background:#12122a;border-radius:0 0 10px 10px;padding:1.5rem;display:none;border:1px solid #2a2a4a;border-top:none}
+.explain-content.show{display:block}
+.explain-content h4{color:#667eea;margin:.75rem 0 .25rem;font-size:.85rem;text-transform:uppercase;letter-spacing:1px}
+.explain-content p{color:#bbb;font-size:.9rem;line-height:1.6}
+.actions{display:flex;gap:.75rem;flex-wrap:wrap;margin:1rem 0}
+.action-btn{padding:.5rem 1rem;border-radius:8px;border:1px solid #3a3a5a;background:transparent;color:#aaa;cursor:pointer;font-family:inherit;font-size:.8rem;transition:.3s}
+.action-btn:hover{border-color:#667eea;color:#fff}
+.action-btn.liked{color:#f093fb;border-color:#f093fb}
+.jotd{background:linear-gradient(135deg,#1a2a1a,#1a1a2e);border:1px solid #2a4a2a;border-radius:16px;padding:1.5rem;margin:1.5rem 0}
+.jotd h3{color:#4ade80;font-size:.9rem;margin-bottom:.75rem}
+.saved-section{margin:2rem 0}
+.saved-section h3{color:#888;font-size:.9rem;margin-bottom:1rem}
+.saved-joke{background:#1a1a2e;border:1px solid #2a2a4a;border-radius:10px;padding:1rem;margin:.5rem 0;font-size:.85rem}
+.hidden{display:none}
+#shareCanvas{position:fixed;top:-9999px}
+.loading{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <h1>🤓 Dev Jokes</h1>
+    <p>AI-powered developer humor with technical explanations</p>
+  </div>
+
+  <div id="jotd" class="jotd hidden">
+    <h3>⭐ Joke of the Day</h3>
+    <p id="jotdText"></p>
+  </div>
+
+  <div class="card">
+    <h3 style="font-size:.9rem;color:#888;margin-bottom:.75rem">Category</h3>
+    <div class="categories" id="categories">
+      <button class="cat-btn active" data-cat="Languages">Languages</button>
+      <button class="cat-btn" data-cat="Git">Git</button>
+      <button class="cat-btn" data-cat="DevOps">DevOps</button>
+      <button class="cat-btn" data-cat="Debugging">Debugging</button>
+      <button class="cat-btn" data-cat="Meetings">Meetings</button>
+      <button class="cat-btn" data-cat="Databases">Databases</button>
+      <button class="cat-btn" data-cat="AI/ML">AI/ML</button>
+    </div>
+    <div class="slider-wrap">
+      <label><span>Nerd Level</span><span id="levelVal">3 — Mid-level devs</span></label>
+      <input type="range" min="1" max="5" value="3" id="nerdLevel">
+    </div>
+    <button class="generate-btn" id="generateBtn">Generate Joke 🎲</button>
+  </div>
+
+  <div id="result" class="hidden">
+    <div class="flip-container" id="flipContainer">
+      <div class="flip-card" id="flipCard">
+        <div class="flip-front">
+          <h3>Setup</h3>
+          <p id="setup"></p>
+          <span class="flip-hint">👆 Click to reveal punchline</span>
+        </div>
+        <div class="flip-back">
+          <h3>Punchline</h3>
+          <p id="punchline"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="explain-section">
+      <button class="explain-toggle" id="explainToggle">💡 Explain the Joke</button>
+      <div class="explain-content" id="explainContent">
+        <h4>What makes it funny</h4><p id="exFunny"></p>
+        <h4>Technical concept</h4><p id="exConcept"></p>
+        <h4>Who gets it</h4><p id="exWho"></p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="action-btn" id="likeBtn">❤️ Save</button>
+      <button class="action-btn" id="nicheBtn">🤔 Too niche?</button>
+      <button class="action-btn" id="shareBtn">📸 Share as Image</button>
+    </div>
+  </div>
+
+  <div class="saved-section" id="savedSection">
+    <h3>💾 Saved Jokes</h3>
+    <div id="savedList"></div>
+  </div>
+</div>
+
+<div id="shareCanvas"></div>
+
+<script>
+const levels = {1:'Junior gets it',2:'Mid-junior',3:'Mid-level devs',4:'Senior engineers',5:'Staff engineers only'};
+let currentJoke = null, category = 'Languages';
+
+document.querySelectorAll('.cat-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  category = b.dataset.cat;
+}));
+
+const slider = document.getElementById('nerdLevel');
+slider.addEventListener('input', () => document.getElementById('levelVal').textContent = `${slider.value} — ${levels[slider.value]}`);
+
+document.getElementById('generateBtn').addEventListener('click', () => fetchJoke(false));
+document.getElementById('flipContainer').addEventListener('click', () => document.getElementById('flipCard').classList.toggle('flipped'));
+document.getElementById('explainToggle').addEventListener('click', () => document.getElementById('explainContent').classList.toggle('show'));
+document.getElementById('nicheBtn').addEventListener('click', () => fetchJoke(true));
+document.getElementById('likeBtn').addEventListener('click', saveJoke);
+document.getElementById('shareBtn').addEventListener('click', shareAsImage);
+
+async function fetchJoke(simpler) {
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true; btn.textContent = 'Generating... ✨';
+  document.getElementById('flipCard').classList.remove('flipped');
+  try {
+    const res = await fetch('/dev-jokes/api/joke', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ category, nerdLevel: +slider.value, simpler })
+    });
+    currentJoke = await res.json();
+    if (currentJoke.error) throw new Error(currentJoke.error);
+    document.getElementById('setup').textContent = currentJoke.setup;
+    document.getElementById('punchline').textContent = currentJoke.punchline;
+    document.getElementById('exFunny').textContent = currentJoke.explanation.what_makes_it_funny;
+    document.getElementById('exConcept').textContent = currentJoke.explanation.technical_concept;
+    document.getElementById('exWho').textContent = currentJoke.explanation.who_gets_it;
+    document.getElementById('result').classList.remove('hidden');
+    document.getElementById('explainContent').classList.remove('show');
+    document.getElementById('likeBtn').classList.remove('liked');
+  } catch(e) { alert('Error: ' + e.message); }
+  btn.disabled = false; btn.textContent = 'Generate Joke 🎲';
+}
+
+function saveJoke() {
+  if (!currentJoke) return;
+  const saved = JSON.parse(localStorage.getItem('devJokes') || '[]');
+  saved.unshift(currentJoke);
+  localStorage.setItem('devJokes', JSON.stringify(saved.slice(0, 50)));
+  document.getElementById('likeBtn').classList.add('liked');
+  renderSaved();
+}
+
+function renderSaved() {
+  const saved = JSON.parse(localStorage.getItem('devJokes') || '[]');
+  const el = document.getElementById('savedList');
+  if (!saved.length) { document.getElementById('savedSection').classList.add('hidden'); return; }
+  document.getElementById('savedSection').classList.remove('hidden');
+  el.innerHTML = saved.slice(0, 5).map(j => `<div class="saved-joke"><strong>${j.setup}</strong><br>${j.punchline}</div>`).join('');
+}
+
+async function shareAsImage() {
+  if (!currentJoke) return;
+  const div = document.createElement('div');
+  div.style.cssText = 'width:600px;padding:40px;background:linear-gradient(135deg,#1a1a2e,#2a1a3e);color:#fff;font-family:Poppins,sans-serif;border-radius:20px';
+  div.innerHTML = `<h2 style="color:#f093fb;margin-bottom:16px">🤓 Dev Joke</h2><p style="font-size:18px;margin-bottom:12px">${currentJoke.setup}</p><p style="font-size:20px;font-weight:600;color:#667eea">${currentJoke.punchline}</p><p style="margin-top:20px;font-size:12px;color:#666">devjokes.app</p>`;
+  document.body.appendChild(div);
+  const canvas = await html2canvas(div);
+  document.body.removeChild(div);
+  const link = document.createElement('a');
+  link.download = 'dev-joke.png';
+  link.href = canvas.toDataURL();
+  link.click();
+}
+
+// Joke of the Day (seeded by date)
+function loadJOTD() {
+  const jokes = [
+    {s:"Why do programmers prefer dark mode?",p:"Because light attracts bugs."},
+    {s:"What's a programmer's favorite hangout place?",p:"Foo Bar."},
+    {s:"Why do Java developers wear glasses?",p:"Because they can't C#."},
+    {s:"How many programmers does it take to change a light bulb?",p:"None. That's a hardware problem."},
+    {s:"Why did the developer go broke?",p:"Because he used up all his cache."},
+    {s:"What's the object-oriented way to become wealthy?",p:"Inheritance."},
+    {s:"Why do Python programmers have low self-esteem?",p:"They're constantly comparing themselves to others."}
+  ];
+  const seed = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const idx = parseInt(seed) % jokes.length;
+  const j = jokes[idx];
+  document.getElementById('jotdText').textContent = `${j.s} — ${j.p}`;
+  document.getElementById('jotd').classList.remove('hidden');
+}
+
+loadJOTD();
+renderSaved();
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Standup Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:#f8f9fc;color:#1a1a2e;min-height:100vh;display:flex}
+.sidebar{width:280px;background:#1a1a2e;color:#fff;padding:24px 16px;overflow-y:auto;position:fixed;height:100vh}
+.sidebar h3{font-size:14px;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-bottom:12px}
+.history-item{background:rgba(255,255,255,.05);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;font-size:12px;transition:.2s}
+.history-item:hover{background:rgba(255,255,255,.1)}
+.history-item .date{opacity:.5;font-size:10px}
+.main{margin-left:280px;flex:1;padding:40px 60px}
+.hero{text-align:center;margin-bottom:48px}
+.hero h1{font-size:2.4rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:#666;margin-top:8px;font-size:1rem}
+.form-grid{display:grid;gap:16px;max-width:700px;margin:0 auto 32px}
+.form-group label{display:block;font-weight:500;margin-bottom:6px;font-size:14px}
+.form-group textarea,.form-group input{width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px 16px;font-family:inherit;font-size:14px;resize:vertical;transition:.2s}
+.form-group textarea:focus,.form-group input:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.1)}
+textarea{min-height:80px}
+.row{display:flex;gap:16px}
+.row .form-group{flex:1}
+.controls{display:flex;align-items:center;gap:16px;justify-content:center;margin-bottom:32px}
+.btn{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:12px 32px;border-radius:10px;font-family:inherit;font-weight:600;font-size:15px;cursor:pointer;transition:.2s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(102,126,234,.3)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13px}
+.toggle input[type=checkbox]{width:18px;height:18px;accent-color:#667eea}
+.variants{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1100px;margin:0 auto}
+.variant-card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.04);border:1px solid #eee;position:relative}
+.variant-card h4{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:#667eea;margin-bottom:12px}
+.variant-card pre{white-space:pre-wrap;font-size:13px;line-height:1.6;font-family:'Poppins',sans-serif;color:#333}
+.copy-btn{position:absolute;top:12px;right:12px;background:#f0f0f0;border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:inherit;transition:.2s}
+.copy-btn:hover{background:#667eea;color:#fff}
+.loading{text-align:center;padding:40px;color:#999}
+@media(max-width:1024px){.variants{grid-template-columns:1fr}}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0;padding:24px}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <h3>History (Last 7)</h3>
+  <div id="history"></div>
+</aside>
+<div class="main">
+  <div class="hero">
+    <h1>Standup Generator</h1>
+    <p>AI-powered standup updates in multiple formats</p>
+  </div>
+  <div class="form-grid">
+    <div class="form-group"><label>Yesterday</label><textarea id="yesterday" placeholder="What did you accomplish yesterday?"></textarea></div>
+    <div class="form-group"><label>Today</label><textarea id="today" placeholder="What will you work on today?"></textarea></div>
+    <div class="form-group"><label>Blockers (optional)</label><textarea id="blockers" placeholder="Any blockers or impediments?"></textarea></div>
+    <div class="row">
+      <div class="form-group"><label>Team (optional)</label><input id="team" placeholder="e.g. Platform"></div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="btn" id="generate">Generate Standup</button>
+    <label class="toggle"><input type="checkbox" id="slackFormat" checked> Slack formatting</label>
+  </div>
+  <div id="output"></div>
+</div>
+<script>
+const fields = ['yesterday','today','blockers','team'];
+const load = () => fields.forEach(f => { const v = localStorage.getItem('standup_'+f); if(v) document.getElementById(f).value = v; });
+const save = () => fields.forEach(f => localStorage.setItem('standup_'+f, document.getElementById(f).value));
+fields.forEach(f => document.getElementById(f).addEventListener('input', save));
+load();
+
+function renderHistory() {
+  const h = JSON.parse(localStorage.getItem('standup_history') || '[]');
+  document.getElementById('history').innerHTML = h.map((e,i) => `<div class="history-item" onclick="loadHistory(${i})"><div class="date">${e.date}</div><div>${e.yesterday.slice(0,50)}...</div></div>`).join('');
+}
+
+function loadHistory(i) {
+  const h = JSON.parse(localStorage.getItem('standup_history') || '[]');
+  if(h[i]) { fields.forEach(f => { document.getElementById(f).value = h[i][f] || ''; }); save(); }
+}
+
+function addHistory(data) {
+  let h = JSON.parse(localStorage.getItem('standup_history') || '[]');
+  h.unshift({ ...data, date: new Date().toLocaleString() });
+  if(h.length > 7) h = h.slice(0, 7);
+  localStorage.setItem('standup_history', JSON.stringify(h));
+  renderHistory();
+}
+
+document.getElementById('generate').addEventListener('click', async () => {
+  const yesterday = document.getElementById('yesterday').value.trim();
+  const today = document.getElementById('today').value.trim();
+  if(!yesterday || !today) return alert('Please fill in Yesterday and Today fields.');
+
+  const blockers = document.getElementById('blockers').value.trim();
+  const team = document.getElementById('team').value.trim();
+  const slackFormat = document.getElementById('slackFormat').checked;
+  const btn = document.getElementById('generate');
+  btn.disabled = true; btn.textContent = 'Generating...';
+  document.getElementById('output').innerHTML = '<div class="loading">Generating your standup...</div>';
+
+  try {
+    const res = await fetch('/standup-generator/api/standup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({yesterday,today,blockers,team,slackFormat}) });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    addHistory({yesterday,today,blockers,team});
+    document.getElementById('output').innerHTML = `<div class="variants">
+      ${card('Async (Slack)', data.async)}
+      ${card('Verbose (Meeting)', data.verbose)}
+      ${card('Minimal', data.minimal)}
+    </div>`;
+  } catch(e) { document.getElementById('output').innerHTML = `<div class="loading" style="color:red">${e.message}</div>`; }
+  btn.disabled = false; btn.textContent = 'Generate Standup';
+});
+
+function card(title, content) {
+  return `<div class="variant-card"><h4>${title}</h4><button class="copy-btn" onclick="copyText(this)">Copy</button><pre>${content}</pre></div>`;
+}
+
+function copyText(btn) {
+  const text = btn.nextElementSibling.textContent;
+  navigator.clipboard.writeText(text);
+  btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 1500);
+}
+
+renderHistory();
+</script>
+</body>
+</html>

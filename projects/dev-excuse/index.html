@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Excuse Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:#0f0f1a;color:#e0e0e0;min-height:100vh}
+.container{max-width:800px;margin:0 auto;padding:2rem}
+.hero{text-align:center;padding:3rem 0 2rem}
+.hero h1{font-size:2.5rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:#888;margin-top:.5rem;font-size:1.1rem}
+.hero .tagline{font-size:.9rem;color:#666;margin-top:.25rem;font-style:italic}
+.controls{background:#1a1a2e;border-radius:16px;padding:2rem;margin:2rem 0;border:1px solid #2a2a4a}
+label{display:block;font-size:.85rem;color:#888;margin-bottom:.5rem;font-weight:500}
+select,button{font-family:'Poppins',sans-serif}
+select{width:100%;padding:.75rem 1rem;background:#0f0f1a;border:1px solid #333;border-radius:10px;color:#e0e0e0;font-size:1rem;margin-bottom:1.5rem;cursor:pointer}
+.slider-wrap{margin-bottom:1.5rem}
+.slider-labels{display:flex;justify-content:space-between;font-size:.75rem;color:#666;margin-top:.25rem}
+input[type=range]{width:100%;accent-color:#764ba2;cursor:pointer}
+.btn-primary{width:100%;padding:1rem;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:12px;color:#fff;font-size:1.1rem;font-weight:600;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(102,126,234,.3)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-chain{width:100%;padding:.75rem;background:transparent;border:1px solid #667eea;border-radius:10px;color:#667eea;font-size:.9rem;font-weight:500;cursor:pointer;margin-top:.75rem;transition:background .2s}
+.btn-chain:hover{background:rgba(102,126,234,.1)}
+.result{display:none;margin-top:2rem}
+.excuse-card{background:#1a1a2e;border-radius:16px;padding:2rem;border:1px solid #2a2a4a;position:relative}
+.excuse-card h3{font-size:.8rem;text-transform:uppercase;letter-spacing:1px;color:#667eea;margin-bottom:1rem}
+.excuse-text{font-size:1.2rem;line-height:1.6;min-height:3rem;border-right:2px solid #667eea;white-space:pre-wrap;animation:blink .7s step-end infinite}
+@keyframes blink{50%{border-color:transparent}}
+.excuse-text.done{border-right:none;animation:none}
+.jargon{margin-top:1.5rem;padding:1rem;background:#0f0f1a;border-radius:10px;font-size:.9rem;color:#aaa;font-style:italic}
+.meta{display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.5rem;align-items:center}
+.badge{padding:.4rem .8rem;border-radius:20px;font-size:.75rem;font-weight:600}
+.blame-badge{background:rgba(234,102,102,.15);color:#ea6666}
+.confidence-badge{background:rgba(102,234,166,.15);color:#66eaa6}
+.evidence{margin-top:1.5rem}
+.evidence h4{font-size:.8rem;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:.5rem}
+.evidence li{font-size:.85rem;color:#aaa;padding:.25rem 0;list-style:none}
+.evidence li::before{content:'📎 '}
+.actions{display:flex;gap:.75rem;margin-top:1.5rem}
+.btn-sm{padding:.5rem 1rem;border-radius:8px;border:1px solid #333;background:transparent;color:#ccc;font-size:.8rem;cursor:pointer;font-family:'Poppins',sans-serif;transition:border-color .2s}
+.btn-sm:hover{border-color:#667eea;color:#667eea}
+.chain-results{margin-top:1.5rem}
+.chain-results .excuse-card{margin-top:1rem;padding:1.5rem}
+.chain-results .chain-label{font-size:.7rem;background:#764ba2;color:#fff;padding:.2rem .6rem;border-radius:10px;display:inline-block;margin-bottom:.75rem}
+.stats{text-align:center;margin-top:2rem;font-size:.8rem;color:#555}
+.stats span{color:#764ba2;font-weight:600}
+.shame{color:#ea6666!important}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <h1>🛡️ Dev Excuse Generator</h1>
+    <p>Professional-grade alibis for professional-grade developers</p>
+    <p class="tagline">Because "it works on my machine" stopped working in 2019</p>
+  </div>
+
+  <div class="controls">
+    <label>What happened?</label>
+    <select id="situation">
+      <option>Broken in prod</option>
+      <option>Missed deadline</option>
+      <option>Tests failing</option>
+      <option>Works on my machine</option>
+      <option>PR not reviewed</option>
+      <option>Estimate was wrong</option>
+    </select>
+
+    <div class="slider-wrap">
+      <label>Seriousness Level: <span id="seriousVal">3</span>/5</label>
+      <input type="range" id="seriousness" min="1" max="5" value="3">
+      <div class="slider-labels"><span>Absurd</span><span>Plausible</span></div>
+    </div>
+
+    <button class="btn-primary" id="generateBtn" onclick="generate(false)">⚡ Generate Excuse</button>
+    <button class="btn-chain" onclick="generate(true)">🔗 Excuse Chain (3 escalating excuses)</button>
+  </div>
+
+  <div class="result" id="result">
+    <div class="excuse-card" id="excuseCard">
+      <h3>Your Excuse</h3>
+      <div class="excuse-text" id="excuseText"></div>
+      <div class="jargon" id="jargon"></div>
+      <div class="meta">
+        <span class="badge blame-badge" id="blame"></span>
+        <span class="badge confidence-badge" id="confidence"></span>
+      </div>
+      <div class="evidence"><h4>Supporting Evidence</h4><ul id="evidence"></ul></div>
+      <div class="actions">
+        <button class="btn-sm" onclick="copyExcuse()">📋 Copy</button>
+        <button class="btn-sm" onclick="shareImage()">🖼️ Share as Image</button>
+      </div>
+    </div>
+    <div class="chain-results" id="chainResults"></div>
+  </div>
+
+  <div class="stats">
+    Today's excuses: <span id="dailyCount">0</span> |
+    Shame counter: <span class="shame" id="shameCount">0</span>
+  </div>
+</div>
+
+<script>
+const slider = document.getElementById('seriousness');
+slider.oninput = () => document.getElementById('seriousVal').textContent = slider.value;
+
+function getToday() { return new Date().toISOString().slice(0, 10); }
+
+function loadStats() {
+  const data = JSON.parse(localStorage.getItem('devexcuse_stats') || '{}');
+  if (data.date !== getToday()) { data.date = getToday(); data.daily = 0; }
+  data.shame = data.shame || 0;
+  return data;
+}
+
+function saveStats(data) { localStorage.setItem('devexcuse_stats', JSON.stringify(data)); updateStatsUI(data); }
+
+function updateStatsUI(data) {
+  document.getElementById('dailyCount').textContent = data.daily;
+  document.getElementById('shameCount').textContent = data.shame;
+}
+
+function saveExcuse(excuse) {
+  const history = JSON.parse(localStorage.getItem('devexcuse_history') || '[]');
+  history.unshift({ ...excuse, timestamp: Date.now() });
+  if (history.length > 10) history.length = 10;
+  localStorage.setItem('devexcuse_history', JSON.stringify(history));
+}
+
+function typewriter(el, text, cb) {
+  el.classList.remove('done');
+  el.textContent = '';
+  let i = 0;
+  const interval = setInterval(() => {
+    el.textContent += text[i++];
+    if (i >= text.length) { clearInterval(interval); el.classList.add('done'); if (cb) cb(); }
+  }, 30);
+}
+
+async function generate(chain) {
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true; btn.textContent = '⏳ Generating...';
+  document.getElementById('chainResults').innerHTML = '';
+
+  try {
+    const res = await fetch('/dev-excuse/api/excuse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ situation: document.getElementById('situation').value, seriousness: +slider.value, chain })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const stats = loadStats();
+    stats.daily++;
+    stats.shame++;
+    saveStats(stats);
+
+    if (chain && data.excuses) {
+      document.getElementById('result').style.display = 'block';
+      renderExcuse(data.excuses[0]);
+      const chainDiv = document.getElementById('chainResults');
+      data.excuses.slice(1).forEach((ex, i) => {
+        chainDiv.innerHTML += `<div class="excuse-card"><span class="chain-label">Escalation ${i+2}</span><p style="font-size:1.1rem">${ex.excuse}</p><p class="jargon">${ex.technical_jargon_version}</p><div class="meta"><span class="badge blame-badge">🎯 ${ex.blame_target}</span><span class="badge confidence-badge">💪 ${ex.confidence_level}%</span></div></div>`;
+      });
+      saveExcuse(data.excuses[0]);
+    } else {
+      document.getElementById('result').style.display = 'block';
+      renderExcuse(data);
+      saveExcuse(data);
+    }
+  } catch (e) { alert('Error: ' + e.message); }
+  btn.disabled = false; btn.textContent = '⚡ Generate Excuse';
+}
+
+function renderExcuse(data) {
+  typewriter(document.getElementById('excuseText'), data.excuse);
+  document.getElementById('jargon').textContent = '🤓 ' + data.technical_jargon_version;
+  document.getElementById('blame').textContent = '🎯 ' + data.blame_target;
+  document.getElementById('confidence').textContent = '💪 ' + data.confidence_level + '% confidence';
+  const ul = document.getElementById('evidence');
+  ul.innerHTML = '';
+  (data.supporting_evidence || []).forEach(e => { const li = document.createElement('li'); li.textContent = e; ul.appendChild(li); });
+}
+
+function copyExcuse() {
+  const text = document.getElementById('excuseText').textContent;
+  navigator.clipboard.writeText(text);
+}
+
+function shareImage() {
+  html2canvas(document.getElementById('excuseCard')).then(canvas => {
+    const a = document.createElement('a');
+    a.download = 'dev-excuse.png';
+    a.href = canvas.toDataURL();
+    a.click();
+  });
+}
+
+updateStatsUI(loadStats());
+</script>
+</body>
+</html>

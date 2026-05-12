@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Question Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:#0f0f1a;color:#e0e0e0;min-height:100vh}
+.hero{text-align:center;padding:60px 20px 40px;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)}
+.hero h1{font-size:2.8rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:#94a3b8;font-size:1.1rem;margin-top:10px}
+.container{max-width:1100px;margin:0 auto;padding:40px 20px}
+.form-card{background:#1a1a2e;border-radius:16px;padding:36px;border:1px solid #2a2a4a;margin-bottom:40px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+label{font-weight:500;font-size:.85rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
+textarea,select,input[type=range]{width:100%;background:#0f0f1a;border:1px solid #2a2a4a;border-radius:10px;padding:12px 16px;color:#e0e0e0;font-family:inherit;font-size:.95rem;transition:border .2s}
+textarea:focus,select:focus{outline:none;border-color:#667eea}
+textarea{resize:vertical;min-height:120px}
+select{cursor:pointer}
+.range-wrap{display:flex;align-items:center;gap:12px}
+.range-wrap input{flex:1;accent-color:#667eea}
+.range-val{background:#667eea;color:#fff;padding:4px 12px;border-radius:8px;font-weight:600;font-size:.85rem;min-width:36px;text-align:center}
+.btn{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;padding:14px 36px;border-radius:10px;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;transition:transform .2s,box-shadow .2s;margin-top:20px}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(102,126,234,.3)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.results-header h2{font-size:1.4rem}
+.btn-export{background:#1a1a2e;border:1px solid #667eea;color:#667eea;padding:10px 20px;border-radius:8px;font-family:inherit;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-export:hover{background:#667eea;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.card{background:#1a1a2e;border:1px solid #2a2a4a;border-radius:14px;padding:24px;cursor:pointer;transition:transform .2s,border-color .2s}
+.card:hover{transform:translateY(-3px);border-color:#667eea}
+.card-question{font-size:1rem;font-weight:500;line-height:1.5;margin-bottom:14px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.badge{padding:4px 10px;border-radius:6px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.badge-type{background:rgba(102,126,234,.15);color:#667eea}
+.badge-easy{background:rgba(16,185,129,.15);color:#10b981}
+.badge-medium{background:rgba(245,158,11,.15);color:#f59e0b}
+.badge-hard{background:rgba(239,68,68,.15);color:#ef4444}
+.card-tests{font-size:.85rem;color:#94a3b8}
+.card-details{display:none;margin-top:16px;padding-top:16px;border-top:1px solid #2a2a4a}
+.card.expanded .card-details{display:block}
+.detail-section h4{font-size:.8rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.detail-section h4.green{color:#10b981}
+.detail-section h4.red{color:#ef4444}
+.detail-section ul{list-style:none;padding:0;margin-bottom:14px}
+.detail-section li{font-size:.85rem;padding:4px 0;padding-left:16px;position:relative;color:#cbd5e1}
+.detail-section li::before{content:'';position:absolute;left:0;top:11px;width:6px;height:6px;border-radius:50%}
+.detail-section.good li::before{background:#10b981}
+.detail-section.bad li::before{background:#ef4444}
+.spinner{display:inline-block;width:20px;height:20px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+#results{display:none}
+</style>
+</head>
+<body>
+<div class="hero">
+  <h1>Interview Question Generator</h1>
+  <p>AI-powered questions tailored to any role, level, and company type</p>
+</div>
+<div class="container">
+  <div class="form-card">
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Job Description</label>
+        <textarea id="jd" placeholder="Paste the job description here..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Role Level</label>
+        <select id="level"><option>Junior</option><option>Mid</option><option selected>Senior</option><option>Staff</option></select>
+      </div>
+      <div class="form-group">
+        <label>Interview Type</label>
+        <select id="type"><option value="technical">Technical</option><option value="behavioral">Behavioral</option><option value="system design">System Design</option><option value="HR">HR</option></select>
+      </div>
+      <div class="form-group">
+        <label>Company Type</label>
+        <select id="company"><option>Startup</option><option>FAANG</option><option>Enterprise</option></select>
+      </div>
+      <div class="form-group">
+        <label>Number of Questions: <span id="numLabel">10</span></label>
+        <div class="range-wrap"><input type="range" id="num" min="5" max="20" value="10"><div class="range-val" id="numVal">10</div></div>
+      </div>
+    </div>
+    <button class="btn" id="generateBtn" onclick="generate()">Generate Questions</button>
+  </div>
+  <div id="results">
+    <div class="results-header">
+      <h2>Generated Questions</h2>
+      <button class="btn-export" onclick="exportJSON()">Export JSON</button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+<script>
+let questions=[];
+const numInput=document.getElementById('num');
+const numVal=document.getElementById('numVal');
+numInput.oninput=()=>{numVal.textContent=numInput.value;document.getElementById('numLabel').textContent=numInput.value};
+
+async function generate(){
+  const btn=document.getElementById('generateBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Generating...';
+  try{
+    const res=await fetch('/interview-questions/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobDescription:document.getElementById('jd').value,roleLevel:document.getElementById('level').value,interviewType:document.getElementById('type').value,companyType:document.getElementById('company').value,numQuestions:+numInput.value})});
+    if(!res.ok)throw new Error((await res.json()).error);
+    questions=await res.json();
+    render();
+  }catch(e){alert('Error: '+e.message)}
+  btn.disabled=false;btn.innerHTML='Generate Questions';
+}
+
+function render(){
+  document.getElementById('results').style.display='block';
+  document.getElementById('grid').innerHTML=questions.map((q,i)=>`
+    <div class="card" onclick="this.classList.toggle('expanded')">
+      <div class="badges">
+        <span class="badge badge-type">${q.type}</span>
+        <span class="badge badge-${(q.difficulty||'medium').toLowerCase()}">${q.difficulty}</span>
+      </div>
+      <div class="card-question">${q.question}</div>
+      <div class="card-tests">Tests: ${q.tests}</div>
+      <div class="card-details">
+        <div class="detail-section good"><h4 class="green">✓ Good Signals</h4><ul>${(q.goodSignals||[]).map(s=>`<li>${s}</li>`).join('')}</ul></div>
+        <div class="detail-section bad"><h4 class="red">✗ Red Flags</h4><ul>${(q.redFlags||[]).map(s=>`<li>${s}</li>`).join('')}</ul></div>
+      </div>
+    </div>`).join('');
+}
+
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(questions,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='interview-questions.json';a.click();
+}
+</script>
+</body>
+</html>

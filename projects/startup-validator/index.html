@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Startup Idea Validator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:#0a0a0f;color:#e2e2e2;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:2rem 1.5rem}
+.hero{text-align:center;padding:4rem 0 3rem}
+.hero h1{font-size:2.8rem;font-weight:800;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+.hero p{color:#888;font-size:1.1rem;font-weight:300}
+.input-section{background:#12121a;border:1px solid #1e1e2e;border-radius:16px;padding:2rem;margin-bottom:2rem}
+textarea{width:100%;min-height:140px;background:#0a0a0f;border:1px solid #2a2a3a;border-radius:12px;padding:1rem;color:#e2e2e2;font-family:'Poppins',sans-serif;font-size:.95rem;resize:vertical;transition:border-color .3s}
+textarea:focus{outline:none;border-color:#667eea}
+.char-count{text-align:right;font-size:.8rem;color:#555;margin-top:.5rem}
+.char-count.valid{color:#4ade80}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.85rem 2rem;border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-weight:600;font-size:.95rem;cursor:pointer;transition:all .3s}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;margin-top:1rem}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(102,126,234,.3)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-secondary{background:#1e1e2e;color:#e2e2e2;border:1px solid #2a2a3a}
+.btn-secondary:hover{border-color:#667eea}
+.loading{display:none;text-align:center;padding:3rem}
+.loading.active{display:block}
+.spinner{width:40px;height:40px;border:3px solid #1e1e2e;border-top-color:#667eea;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+#results{display:none}
+#results.active{display:block}
+.score-card{background:#12121a;border:1px solid #1e1e2e;border-radius:16px;padding:2rem;text-align:center;margin-bottom:2rem}
+.overall-score{font-size:4rem;font-weight:800;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.overall-label{color:#888;font-size:.9rem;text-transform:uppercase;letter-spacing:2px}
+.radar-container{background:#12121a;border:1px solid #1e1e2e;border-radius:16px;padding:2rem;margin-bottom:2rem;display:flex;justify-content:center}
+.radar-container svg{max-width:100%}
+.dimension-card{background:#12121a;border:1px solid #1e1e2e;border-radius:12px;margin-bottom:.75rem;overflow:hidden;transition:border-color .3s}
+.dimension-card:hover{border-color:#2a2a3a}
+.dimension-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;cursor:pointer}
+.dimension-header h3{font-size:.95rem;font-weight:500}
+.dimension-score{background:#1e1e2e;padding:.25rem .75rem;border-radius:6px;font-weight:600;font-size:.85rem}
+.dimension-body{display:none;padding:0 1.5rem 1.5rem;border-top:1px solid #1e1e2e}
+.dimension-card.open .dimension-body{display:block}
+.dimension-body p{color:#aaa;font-size:.9rem;margin-top:.75rem;line-height:1.6}
+.dimension-body h4{font-size:.8rem;color:#667eea;text-transform:uppercase;letter-spacing:1px;margin-top:1rem}
+.dimension-body ul{list-style:none;margin-top:.5rem}
+.dimension-body li{color:#aaa;font-size:.85rem;padding:.3rem 0;padding-left:1rem;position:relative}
+.dimension-body li::before{content:'→';position:absolute;left:0;color:#667eea}
+.section-card{background:#12121a;border:1px solid #1e1e2e;border-radius:16px;padding:1.5rem 2rem;margin-bottom:1.5rem}
+.section-card h2{font-size:1.1rem;font-weight:600;margin-bottom:1rem;color:#fff}
+.competitor{background:#0a0a0f;border:1px solid #1e1e2e;border-radius:10px;padding:1rem;margin-bottom:.75rem}
+.competitor strong{color:#e2e2e2;font-size:.9rem}
+.competitor p{color:#888;font-size:.8rem;margin-top:.25rem}
+.persona-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.persona-item h4{font-size:.8rem;color:#667eea;text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem}
+.persona-item p,.persona-item li{color:#aaa;font-size:.85rem}
+.persona-item ul{list-style:none}
+.persona-item li{padding:.2rem 0}
+.verdict-card{border-radius:16px;padding:2rem;text-align:center;margin-bottom:2rem}
+.verdict-card.pursue{background:linear-gradient(135deg,rgba(74,222,128,.1),rgba(74,222,128,.05));border:1px solid rgba(74,222,128,.3)}
+.verdict-card.pivot{background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(251,191,36,.05));border:1px solid rgba(251,191,36,.3)}
+.verdict-card.park{background:linear-gradient(135deg,rgba(248,113,113,.1),rgba(248,113,113,.05));border:1px solid rgba(248,113,113,.3)}
+.verdict-decision{font-size:2rem;font-weight:800;margin-bottom:.5rem}
+.verdict-card.pursue .verdict-decision{color:#4ade80}
+.verdict-card.pivot .verdict-decision{color:#fbbf24}
+.verdict-card.park .verdict-decision{color:#f87171}
+.verdict-reasoning{color:#aaa;font-size:.9rem;line-height:1.6}
+.actions{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2rem}
+.stress-questions{background:#12121a;border:1px solid #1e1e2e;border-radius:16px;padding:1.5rem 2rem;margin-bottom:2rem;display:none}
+.stress-questions.active{display:block}
+.stress-questions h2{font-size:1.1rem;font-weight:600;margin-bottom:1rem}
+.stress-questions ol{padding-left:1.25rem}
+.stress-questions li{color:#f87171;font-size:.9rem;padding:.5rem 0;line-height:1.5}
+@media(max-width:600px){.hero h1{font-size:2rem}.persona-grid{grid-template-columns:1fr}.actions{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <h1>Startup Validator</h1>
+    <p>Get a brutally honest AI assessment of your startup idea</p>
+  </div>
+
+  <div class="input-section">
+    <textarea id="ideaInput" placeholder="Describe your startup idea in detail. What problem does it solve? Who is it for? How will it make money?"></textarea>
+    <div class="char-count" id="charCount">0 / 50 min</div>
+    <button class="btn btn-primary" id="validateBtn" disabled>Validate Idea</button>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Analyzing your idea across 7 dimensions...</p>
+  </div>
+
+  <div id="results">
+    <div class="score-card">
+      <div class="overall-score" id="overallScore">0</div>
+      <div class="overall-label">Overall Score</div>
+    </div>
+
+    <div class="radar-container"><svg id="radarChart" viewBox="0 0 400 400" width="400" height="400"></svg></div>
+
+    <div id="dimensionCards"></div>
+
+    <div class="section-card" id="competitorsSection"><h2>🏁 Competitors</h2><div id="competitorsList"></div></div>
+
+    <div class="section-card" id="personaSection"><h2>🎯 Target Customer Persona</h2><div class="persona-grid" id="personaGrid"></div></div>
+
+    <div class="section-card" id="mvpSection"><h2>🚀 MVP Scope</h2><div id="mvpContent"></div></div>
+
+    <div id="verdictCard"></div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" id="stressBtn">🔥 Stress Test</button>
+      <button class="btn btn-secondary" id="exportBtn">📄 Export as Text</button>
+    </div>
+
+    <div class="stress-questions" id="stressSection">
+      <h2>🔥 Investor Stress Test</h2>
+      <ol id="stressQuestions"></ol>
+    </div>
+  </div>
+</div>
+
+<script>
+const input = document.getElementById('ideaInput');
+const charCount = document.getElementById('charCount');
+const validateBtn = document.getElementById('validateBtn');
+const loading = document.getElementById('loading');
+const results = document.getElementById('results');
+let reportData = null;
+
+input.addEventListener('input', () => {
+  const len = input.value.length;
+  charCount.textContent = `${len} / 50 min`;
+  charCount.className = 'char-count' + (len >= 50 ? ' valid' : '');
+  validateBtn.disabled = len < 50;
+});
+
+validateBtn.addEventListener('click', async () => {
+  loading.classList.add('active');
+  results.classList.remove('active');
+  document.getElementById('stressSection').classList.remove('active');
+  try {
+    const res = await fetch('/startup-validator/api/validate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({idea: input.value}) });
+    if (!res.ok) throw new Error((await res.json()).error);
+    reportData = await res.json();
+    renderResults(reportData);
+  } catch(e) { alert('Error: ' + e.message); }
+  loading.classList.remove('active');
+});
+
+function renderResults(data) {
+  document.getElementById('overallScore').textContent = data.overallScore + '/10';
+  drawRadar(data.dimensions);
+  renderDimensions(data.dimensions);
+  renderCompetitors(data.competitors);
+  renderPersona(data.persona);
+  renderMVP(data.mvpScope);
+  renderVerdict(data.verdict);
+  results.classList.add('active');
+}
+
+function drawRadar(dims) {
+  const svg = document.getElementById('radarChart');
+  const cx=200,cy=200,r=150,n=dims.length;
+  let html = '';
+  // Grid
+  for(let lvl=1;lvl<=5;lvl++){
+    const cr=r*lvl/5;
+    let pts=[];
+    for(let i=0;i<n;i++){const a=Math.PI*2*i/n-Math.PI/2;pts.push(`${cx+cr*Math.cos(a)},${cy+cr*Math.sin(a)}`);}
+    html+=`<polygon points="${pts.join(' ')}" fill="none" stroke="#1e1e2e" stroke-width="1"/>`;
+  }
+  // Axes + labels
+  for(let i=0;i<n;i++){
+    const a=Math.PI*2*i/n-Math.PI/2;
+    const x2=cx+r*Math.cos(a),y2=cy+r*Math.sin(a);
+    html+=`<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="#1e1e2e" stroke-width="1"/>`;
+    const lx=cx+(r+25)*Math.cos(a),ly=cy+(r+25)*Math.sin(a);
+    html+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#888" font-size="9" font-family="Poppins">${dims[i].name}</text>`;
+  }
+  // Data polygon
+  let dataPts=[];
+  for(let i=0;i<n;i++){
+    const a=Math.PI*2*i/n-Math.PI/2;
+    const dr=r*dims[i].score/10;
+    dataPts.push(`${cx+dr*Math.cos(a)},${cy+dr*Math.sin(a)}`);
+  }
+  html+=`<polygon points="${dataPts.join(' ')}" fill="rgba(102,126,234,0.2)" stroke="#667eea" stroke-width="2"/>`;
+  // Dots
+  for(let i=0;i<n;i++){
+    const a=Math.PI*2*i/n-Math.PI/2;
+    const dr=r*dims[i].score/10;
+    html+=`<circle cx="${cx+dr*Math.cos(a)}" cy="${cy+dr*Math.sin(a)}" r="4" fill="#667eea"/>`;
+  }
+  svg.innerHTML=html;
+}
+
+function renderDimensions(dims) {
+  document.getElementById('dimensionCards').innerHTML = dims.map(d => `
+    <div class="dimension-card" onclick="this.classList.toggle('open')">
+      <div class="dimension-header"><h3>${d.name}</h3><span class="dimension-score">${d.score}/10</span></div>
+      <div class="dimension-body">
+        <p>${d.analysis}</p>
+        <h4>Risks</h4><ul>${d.risks.map(r=>`<li>${r}</li>`).join('')}</ul>
+        <h4>Questions to Answer</h4><ul>${d.questions.map(q=>`<li>${q}</li>`).join('')}</ul>
+      </div>
+    </div>`).join('');
+}
+
+function renderCompetitors(comps) {
+  document.getElementById('competitorsList').innerHTML = comps.map(c => `
+    <div class="competitor"><strong>${c.name}</strong><p>${c.description}</p><p style="color:#667eea;margin-top:.25rem">Differentiator: ${c.differentiator}</p></div>`).join('');
+}
+
+function renderPersona(p) {
+  document.getElementById('personaGrid').innerHTML = `
+    <div class="persona-item"><h4>${p.title}</h4><p>${p.demographics}</p></div>
+    <div class="persona-item"><h4>Pain Points</h4><ul>${p.painPoints.map(x=>`<li>• ${x}</li>`).join('')}</ul></div>
+    <div class="persona-item" style="grid-column:1/-1"><h4>Goals</h4><ul>${p.goals.map(x=>`<li>• ${x}</li>`).join('')}</ul></div>`;
+}
+
+function renderMVP(m) {
+  document.getElementById('mvpContent').innerHTML = `
+    <p style="color:#4ade80;font-weight:600;margin-bottom:.75rem">Timeline: ${m.timeline}</p>
+    <h4 style="font-size:.8rem;color:#667eea;text-transform:uppercase;letter-spacing:1px">Core Features</h4>
+    <ul style="list-style:none;margin:.5rem 0 1rem">${m.coreFeatures.map(f=>`<li style="color:#aaa;font-size:.85rem;padding:.2rem 0">✓ ${f}</li>`).join('')}</ul>
+    <h4 style="font-size:.8rem;color:#667eea;text-transform:uppercase;letter-spacing:1px">Out of Scope</h4>
+    <ul style="list-style:none;margin:.5rem 0">${m.outOfScope.map(f=>`<li style="color:#666;font-size:.85rem;padding:.2rem 0">✗ ${f}</li>`).join('')}</ul>`;
+}
+
+function renderVerdict(v) {
+  const cls = v.decision.toLowerCase();
+  document.getElementById('verdictCard').innerHTML = `
+    <div class="verdict-card ${cls}"><div class="verdict-decision">${v.decision.toUpperCase()}</div><p class="verdict-reasoning">${v.reasoning}</p></div>`;
+}
+
+document.getElementById('stressBtn').addEventListener('click', async () => {
+  const sec = document.getElementById('stressSection');
+  if (sec.classList.contains('active')) { sec.classList.remove('active'); return; }
+  document.getElementById('stressQuestions').innerHTML = '<li>Loading...</li>';
+  sec.classList.add('active');
+  try {
+    const res = await fetch('/startup-validator/api/stress-test', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({idea:input.value, scores:reportData.dimensions.map(d=>({name:d.name,score:d.score}))}) });
+    const data = await res.json();
+    document.getElementById('stressQuestions').innerHTML = data.questions.map(q=>`<li>${q}</li>`).join('');
+  } catch(e) { document.getElementById('stressQuestions').innerHTML = `<li>Error: ${e.message}</li>`; }
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  if (!reportData) return;
+  const d = reportData;
+  let txt = `STARTUP VALIDATION REPORT\n${'='.repeat(40)}\n\nIdea: ${input.value}\n\nOverall Score: ${d.overallScore}/10\n\n`;
+  txt += `DIMENSIONS\n${'-'.repeat(30)}\n`;
+  d.dimensions.forEach(dim => { txt += `\n${dim.name}: ${dim.score}/10\n${dim.analysis}\nRisks: ${dim.risks.join('; ')}\nQuestions: ${dim.questions.join('; ')}\n`; });
+  txt += `\nCOMPETITORS\n${'-'.repeat(30)}\n`;
+  d.competitors.forEach(c => { txt += `${c.name}: ${c.description} (Diff: ${c.differentiator})\n`; });
+  txt += `\nTARGET PERSONA\n${'-'.repeat(30)}\n${d.persona.title} - ${d.persona.demographics}\nPain Points: ${d.persona.painPoints.join('; ')}\nGoals: ${d.persona.goals.join('; ')}\n`;
+  txt += `\nMVP SCOPE\n${'-'.repeat(30)}\nTimeline: ${d.mvpScope.timeline}\nCore: ${d.mvpScope.coreFeatures.join('; ')}\nOut of Scope: ${d.mvpScope.outOfScope.join('; ')}\n`;
+  txt += `\nVERDICT: ${d.verdict.decision}\n${d.verdict.reasoning}\n`;
+  const blob = new Blob([txt], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'startup-validation-report.txt';
+  a.click();
+});
+</script>
+</body>
+</html>

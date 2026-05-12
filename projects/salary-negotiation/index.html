@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salary Negotiation Script Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:#0f0f1a;color:#e0e0e0;min-height:100vh}
+.container{max-width:800px;margin:0 auto;padding:2rem 1.5rem}
+.hero{text-align:center;padding:3rem 0 2rem}
+.hero h1{font-size:2.2rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+.hero p{color:#999;font-size:1rem;max-width:500px;margin:0 auto}
+.card{background:#1a1a2e;border-radius:16px;padding:2rem;margin-top:2rem;border:1px solid #2a2a4a}
+label{display:block;font-size:.85rem;font-weight:500;color:#aaa;margin-bottom:.3rem;margin-top:1rem}
+label:first-child{margin-top:0}
+input,select{width:100%;padding:.75rem 1rem;background:#12121f;border:1px solid #333;border-radius:8px;color:#fff;font-family:inherit;font-size:.9rem;transition:border .2s}
+input:focus,select:focus{outline:none;border-color:#667eea}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.btn{width:100%;padding:.9rem;margin-top:1.5rem;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+.btn:hover{opacity:.9}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+#results{display:none;margin-top:2rem}
+.section{background:#12121f;border:1px solid #2a2a4a;border-radius:12px;margin-bottom:1rem;overflow:hidden}
+.section-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.2rem;cursor:pointer;user-select:none}
+.section-header h3{font-size:.95rem;font-weight:600;color:#c0c0ff}
+.section-header .actions{display:flex;gap:.5rem}
+.copy-btn{background:#2a2a4a;border:none;color:#aaa;padding:.3rem .6rem;border-radius:6px;font-size:.75rem;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#3a3a5a;color:#fff}
+.section-body{padding:0 1.2rem 1.2rem;font-size:.88rem;line-height:1.7;color:#ccc;white-space:pre-wrap}
+.section.collapsed .section-body{display:none}
+.chevron{transition:transform .2s;color:#666}
+.section.collapsed .chevron{transform:rotate(-90deg)}
+.download-btn{display:inline-block;margin-top:1rem;padding:.7rem 1.5rem;background:#2a2a4a;color:#c0c0ff;border:none;border-radius:8px;font-family:inherit;font-size:.85rem;cursor:pointer;text-decoration:none}
+.download-btn:hover{background:#3a3a5a}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid #fff4;border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:.5rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <h1>Salary Negotiation Script</h1>
+    <p>Generate a personalized, step-by-step negotiation playbook powered by AI. Walk into your next conversation with confidence.</p>
+  </div>
+  <div class="card">
+    <form id="form">
+      <div class="row">
+        <div><label>Current Offer ($)</label><input type="number" id="currentOffer" required placeholder="85000"></div>
+        <div><label>Target Amount ($)</label><input type="number" id="targetAmount" required placeholder="105000"></div>
+      </div>
+      <div class="row">
+        <div><label>Role Title</label><input type="text" id="roleTitle" required placeholder="Senior Software Engineer"></div>
+        <div><label>Company Name</label><input type="text" id="companyName" required placeholder="Acme Corp"></div>
+      </div>
+      <div class="row">
+        <div><label>Years of Experience</label><input type="number" id="experience" required placeholder="5"></div>
+        <div><label>Competing Offer $ (optional)</label><input type="number" id="competingOffer" placeholder="95000"></div>
+      </div>
+      <label>Key Achievement #1</label><input type="text" id="ach1" placeholder="Led migration saving $200k/year">
+      <label>Key Achievement #2</label><input type="text" id="ach2" placeholder="Grew team from 3 to 12 engineers">
+      <label>Key Achievement #3</label><input type="text" id="ach3" placeholder="Shipped product 2 months ahead of schedule">
+      <label>Negotiation Channel</label>
+      <select id="channel">
+        <option value="phone">Phone Call</option>
+        <option value="email">Email</option>
+        <option value="in-person">In-Person</option>
+      </select>
+      <button type="submit" class="btn" id="submitBtn">Generate My Negotiation Script</button>
+    </form>
+  </div>
+  <div id="results"></div>
+</div>
+<script>
+const form=document.getElementById('form'),results=document.getElementById('results'),submitBtn=document.getElementById('submitBtn');
+form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  submitBtn.disabled=true;
+  submitBtn.innerHTML='<span class="spinner"></span>Generating...';
+  results.style.display='none';
+  const body={
+    currentOffer:document.getElementById('currentOffer').value,
+    targetAmount:document.getElementById('targetAmount').value,
+    roleTitle:document.getElementById('roleTitle').value,
+    companyName:document.getElementById('companyName').value,
+    experience:document.getElementById('experience').value,
+    competingOffer:document.getElementById('competingOffer').value,
+    achievements:[document.getElementById('ach1').value,document.getElementById('ach2').value,document.getElementById('ach3').value],
+    channel:document.getElementById('channel').value
+  };
+  try{
+    const res=await fetch('/salary-negotiation/api/script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok)throw new Error('API error');
+    const data=await res.json();
+    renderResults(data,body.channel);
+  }catch(err){results.innerHTML='<div class="card" style="color:#f66">Failed to generate script. Please check your API key and try again.</div>';results.style.display='block';}
+  submitBtn.disabled=false;
+  submitBtn.textContent='Generate My Negotiation Script';
+});
+
+function renderResults(data,channel){
+  const sections=[
+    {title:'🎯 Opening',key:'opening'},
+    {title:'⚓ Anchoring Your Number',key:'anchor'},
+    {title:'🛡️ Objection Responses',key:'objections',isList:true},
+    {title:'🤝 Closing',key:'closing'}
+  ];
+  if(channel==='email'&&data.emailDraft)sections.push({title:'📧 Email Draft',key:'emailDraft'});
+
+  let html=sections.map(s=>{
+    const content=s.isList?(Array.isArray(data[s.key])?data[s.key].join('\n\n---\n\n'):data[s.key]):data[s.key];
+    return `<div class="section"><div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')"><h3><span class="chevron">▼</span> ${s.title}</h3><div class="actions"><button class="copy-btn" onclick="event.stopPropagation();copyText(this,'${s.key}')">Copy</button></div></div><div class="section-body" data-key="${s.key}">${content||''}</div></div>`;
+  }).join('');
+  html+=`<button class="download-btn" onclick="downloadScript()">⬇ Download as Text File</button>`;
+  results.innerHTML=html;
+  results.style.display='block';
+  window._scriptData=data;
+  window._channel=channel;
+}
+
+function copyText(btn,key){
+  const el=btn.closest('.section').querySelector('.section-body');
+  navigator.clipboard.writeText(el.textContent);
+  btn.textContent='Copied!';
+  setTimeout(()=>btn.textContent='Copy',1500);
+}
+
+function downloadScript(){
+  const d=window._scriptData;
+  let text=`SALARY NEGOTIATION SCRIPT\n${'='.repeat(40)}\n\n`;
+  text+=`OPENING:\n${d.opening}\n\n`;
+  text+=`ANCHORING:\n${d.anchor}\n\n`;
+  text+=`OBJECTION RESPONSES:\n${(Array.isArray(d.objections)?d.objections.join('\n\n'):d.objections)}\n\n`;
+  text+=`CLOSING:\n${d.closing}\n\n`;
+  if(window._channel==='email'&&d.emailDraft)text+=`EMAIL DRAFT:\n${d.emailDraft}\n`;
+  const blob=new Blob([text],{type:'text/plain'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='negotiation-script.txt';
+  a.click();
+}
+</script>
+</body>
+</html>

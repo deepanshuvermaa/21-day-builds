@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Roaster</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #fafafa; color: #1a1a1a; min-height: 100vh; }
+    .container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+    
+    /* Hero */
+    .hero { text-align: center; margin-bottom: 48px; }
+    .hero h1 { font-size: 2.4rem; font-weight: 700; margin-bottom: 12px; }
+    .hero p { font-size: 1.05rem; color: #555; font-weight: 300; max-width: 500px; margin: 0 auto; }
+
+    /* Form */
+    .form-group { display: flex; gap: 12px; margin-bottom: 16px; }
+    .form-group input {
+      flex: 1; padding: 14px 18px; border: 1px solid #ddd; border-radius: 8px;
+      font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;
+    }
+    .form-group input:focus { border-color: #1a1a1a; }
+    .btn {
+      padding: 14px 28px; background: #1a1a1a; color: #fff; border: none; border-radius: 8px;
+      font-family: inherit; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Toggle */
+    .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 40px; }
+    .toggle-row label { font-size: 0.85rem; color: #666; font-weight: 400; }
+    .toggle { position: relative; width: 44px; height: 24px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle .slider {
+      position: absolute; inset: 0; background: #ccc; border-radius: 24px; cursor: pointer; transition: 0.2s;
+    }
+    .toggle .slider::before {
+      content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
+      background: #fff; border-radius: 50%; transition: 0.2s;
+    }
+    .toggle input:checked + .slider { background: #1a1a1a; }
+    .toggle input:checked + .slider::before { transform: translateX(20px); }
+
+    /* Results */
+    .results { display: none; }
+    .results.visible { display: block; }
+    .overall { text-align: center; margin-bottom: 32px; padding: 32px; background: #fff; border: 1px solid #eee; border-radius: 12px; }
+    .overall .score { font-size: 3.5rem; font-weight: 700; }
+    .overall .score-label { font-size: 0.8rem; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .overall .summary { font-size: 1rem; color: #444; font-weight: 300; line-height: 1.6; }
+
+    .section-card {
+      background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 24px; margin-bottom: 16px;
+    }
+    .section-card .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .section-card .card-header h3 { font-size: 1rem; font-weight: 600; }
+    .section-card .card-header .card-score { font-size: 1.4rem; font-weight: 700; }
+    .section-card .roast { font-size: 0.9rem; color: #333; margin-bottom: 10px; line-height: 1.5; }
+    .section-card .fix { font-size: 0.85rem; color: #666; padding-left: 12px; border-left: 2px solid #ddd; }
+
+    .error { text-align: center; color: #c0392b; font-size: 0.9rem; margin-top: 16px; }
+    .loading { text-align: center; color: #888; font-size: 0.9rem; margin-top: 24px; }
+
+    .score-low { color: #c0392b; }
+    .score-mid { color: #d4a017; }
+    .score-high { color: #27ae60; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>Portfolio Roaster</h1>
+      <p>Drop your portfolio URL and get brutally honest feedback on design, content, UX, mobile-friendliness, and CTAs.</p>
+    </div>
+
+    <div class="form-group">
+      <input type="url" id="urlInput" placeholder="https://yourportfolio.dev">
+      <button class="btn" id="submitBtn" onclick="roast()">Roast It</button>
+    </div>
+
+    <div class="toggle-row">
+      <label class="toggle">
+        <input type="checkbox" id="seriousToggle">
+        <span class="slider"></span>
+      </label>
+      <label for="seriousToggle">Serious Mode (professional UX feedback)</label>
+    </div>
+
+    <div class="loading" id="loading" style="display:none;">Analyzing portfolio...</div>
+    <div class="error" id="error"></div>
+
+    <div class="results" id="results">
+      <div class="overall">
+        <div class="score-label">Overall Score</div>
+        <div class="score" id="overallScore"></div>
+        <div class="summary" id="roastSummary"></div>
+      </div>
+      <div id="sections"></div>
+    </div>
+  </div>
+
+  <script>
+    async function roast() {
+      const url = document.getElementById('urlInput').value.trim();
+      const serious = document.getElementById('seriousToggle').checked;
+      const btn = document.getElementById('submitBtn');
+      const loading = document.getElementById('loading');
+      const error = document.getElementById('error');
+      const results = document.getElementById('results');
+
+      if (!url) { error.textContent = 'Enter a URL.'; return; }
+      error.textContent = '';
+      results.classList.remove('visible');
+      loading.style.display = 'block';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/portfolio-roaster/api/roast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, serious })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+        render(data);
+      } catch (e) {
+        error.textContent = e.message;
+      } finally {
+        loading.style.display = 'none';
+        btn.disabled = false;
+      }
+    }
+
+    function scoreClass(s) { return s >= 70 ? 'score-high' : s >= 40 ? 'score-mid' : 'score-low'; }
+
+    function render(data) {
+      document.getElementById('overallScore').textContent = data.overall_score + '/100';
+      document.getElementById('overallScore').className = 'score ' + scoreClass(data.overall_score);
+      document.getElementById('roastSummary').textContent = data.roast_summary;
+
+      const container = document.getElementById('sections');
+      container.innerHTML = data.sections.map(s => `
+        <div class="section-card">
+          <div class="card-header">
+            <h3>${s.name}</h3>
+            <span class="card-score ${scoreClass(s.score)}">${s.score}</span>
+          </div>
+          <p class="roast">${s.roast}</p>
+          <p class="fix">${s.fix}</p>
+        </div>
+      `).join('');
+
+      document.getElementById('results').classList.add('visible');
+    }
+
+    document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') roast(); });
+  </script>
+</body>
+</html>

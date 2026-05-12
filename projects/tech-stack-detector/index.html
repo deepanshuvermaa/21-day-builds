@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tech Stack Detector</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #0f0f1a; color: #e0e0e0; min-height: 100vh; }
+    .hero { text-align: center; padding: 60px 20px 40px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+    .hero h1 { font-size: 2.5rem; font-weight: 700; background: linear-gradient(90deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { color: #888; margin-top: 8px; font-weight: 300; }
+    .search-box { max-width: 600px; margin: 30px auto 0; display: flex; gap: 10px; }
+    .search-box input { flex: 1; padding: 14px 20px; border-radius: 12px; border: 1px solid #333; background: #1a1a2e; color: #fff; font-size: 1rem; font-family: inherit; outline: none; transition: border-color .2s; }
+    .search-box input:focus { border-color: #667eea; }
+    .search-box button { padding: 14px 28px; border-radius: 12px; border: none; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; font-weight: 600; font-family: inherit; cursor: pointer; font-size: 1rem; transition: opacity .2s; }
+    .search-box button:hover { opacity: .9; }
+    .search-box button:disabled { opacity: .5; cursor: not-allowed; }
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+    .error { background: #2d1b1b; border: 1px solid #5c2a2a; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; color: #f87171; }
+    .category { margin-bottom: 30px; }
+    .category h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; color: #a78bfa; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+    .card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; padding: 18px; transition: border-color .2s; }
+    .card:hover { border-color: #667eea; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .card-header h3 { font-size: .95rem; font-weight: 600; }
+    .badge { font-size: .7rem; padding: 3px 8px; border-radius: 20px; font-weight: 500; text-transform: uppercase; }
+    .badge-definite { background: #064e3b; color: #6ee7b7; }
+    .badge-likely { background: #1e3a5f; color: #7dd3fc; }
+    .badge-possible { background: #3b2f00; color: #fcd34d; }
+    .evidence { font-size: .8rem; color: #888; }
+    .headers-section { margin-top: 40px; }
+    .headers-toggle { background: none; border: 1px solid #333; color: #aaa; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: .85rem; }
+    .headers-toggle:hover { border-color: #667eea; color: #fff; }
+    .headers-content { display: none; margin-top: 14px; background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 10px; padding: 16px; font-size: .78rem; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; color: #aaa; }
+    .headers-content.open { display: block; }
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #fff4; border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; margin-right: 8px; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <h1>Tech Stack Detector</h1>
+    <p>Discover what technologies power any website — no AI, pure deterministic analysis</p>
+    <div class="search-box">
+      <input type="text" id="url" placeholder="Enter a URL (e.g. github.com)" aria-label="Website URL">
+      <button id="btn" onclick="analyze()">Detect</button>
+    </div>
+  </section>
+  <div class="container">
+    <div id="results"></div>
+  </div>
+  <script>
+    async function analyze() {
+      const input = document.getElementById('url');
+      const btn = document.getElementById('btn');
+      const out = document.getElementById('results');
+      const url = input.value.trim();
+      if (!url) return;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Detecting...';
+      out.innerHTML = '';
+      try {
+        const res = await fetch('/tech-stack-detector/api/detect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+        const data = await res.json();
+        if (data.error) { out.innerHTML = `<div class="error">${data.error}</div>`; return; }
+        const grouped = {};
+        data.techs.forEach(t => { (grouped[t.category] = grouped[t.category] || []).push(t); });
+        let html = '';
+        for (const [cat, techs] of Object.entries(grouped)) {
+          html += `<div class="category"><h2>${cat}</h2><div class="cards">`;
+          techs.forEach(t => {
+            html += `<div class="card"><div class="card-header"><h3>${t.name}</h3><span class="badge badge-${t.confidence}">${t.confidence}</span></div><p class="evidence">${t.evidence}</p></div>`;
+          });
+          html += `</div></div>`;
+        }
+        if (!data.techs.length) html = '<p style="color:#888">No technologies detected.</p>';
+        html += `<div class="headers-section"><button class="headers-toggle" onclick="this.nextElementSibling.classList.toggle('open')">Toggle Raw Headers</button><div class="headers-content">${Object.entries(data.headers).map(([k,v])=>`${k}: ${v}`).join('\n')}</div></div>`;
+        out.innerHTML = html;
+      } catch (e) { out.innerHTML = `<div class="error">${e.message}</div>`; }
+      finally { btn.disabled = false; btn.textContent = 'Detect'; }
+    }
+    document.getElementById('url').addEventListener('keydown', e => { if (e.key === 'Enter') analyze(); });
+  </script>
+</body>
+</html>

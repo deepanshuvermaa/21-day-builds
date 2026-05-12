@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Query Explainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f1419;--surface:#1a1f2e;--surface2:#232a3b;--border:#2d3548;--primary:#3b82f6;--primary-hover:#2563eb;--text:#e2e8f0;--text-muted:#94a3b8;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--accent:#8b5cf6}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+.container{max-width:900px;margin:0 auto;padding:2rem 1.5rem}
+.hero{text-align:center;padding:3rem 0 2rem}
+.hero h1{font-size:2.2rem;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--text-muted);margin-top:.5rem;font-size:1rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.card h3{font-size:.9rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:1rem}
+#sql-editor{width:100%;min-height:160px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:1rem;font-family:'JetBrains Mono',monospace;font-size:.9rem;color:var(--text);resize:vertical;outline:none;transition:border-color .2s}
+#sql-editor:focus{border-color:var(--primary)}
+.controls{display:flex;gap:1rem;align-items:center;margin-top:1rem;flex-wrap:wrap}
+select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:.6rem 1rem;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.85rem;outline:none}
+.btn{background:var(--primary);color:#fff;border:none;padding:.7rem 1.5rem;border-radius:8px;font-family:'Poppins',sans-serif;font-weight:500;font-size:.9rem;cursor:pointer;transition:background .2s}
+.btn:hover{background:var(--primary-hover)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.examples{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+.examples button{background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);padding:.4rem .8rem;border-radius:6px;font-size:.75rem;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all .2s}
+.examples button:hover{border-color:var(--primary);color:var(--text)}
+#results{display:none}
+.summary{background:linear-gradient(135deg,rgba(59,130,246,.1),rgba(139,92,246,.1));border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:1.2rem;margin-bottom:1.5rem;font-size:.95rem}
+.step{display:flex;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--border)}
+.step:last-child{border-bottom:none}
+.step-num{background:var(--primary);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;flex-shrink:0}
+.step-clause{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--accent);margin-bottom:.3rem}
+.step-explanation{font-size:.88rem;color:var(--text-muted)}
+.notes-list{list-style:none;padding:0}
+.notes-list li{padding:.5rem 0;padding-left:1.2rem;position:relative;font-size:.88rem;color:var(--text-muted)}
+.notes-list li::before{content:'•';position:absolute;left:0;color:var(--warning)}
+.notes-list.issues li::before{color:var(--danger)}
+.optimized{background:var(--surface2);border-radius:8px;padding:1rem;font-family:'JetBrains Mono',monospace;font-size:.82rem;white-space:pre-wrap;overflow-x:auto;color:var(--success)}
+.loading{display:none;text-align:center;padding:2rem;color:var(--text-muted)}
+.spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:1rem;color:var(--danger);display:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <h1>&#128269; SQL Query Explainer</h1>
+    <p>Paste any SQL query and get a plain English explanation with performance insights</p>
+  </div>
+
+  <div class="card">
+    <h3>Your Query</h3>
+    <textarea id="sql-editor" placeholder="Paste your SQL query here..."></textarea>
+    <div class="controls">
+      <select id="dialect">
+        <option value="PostgreSQL">PostgreSQL</option>
+        <option value="MySQL">MySQL</option>
+        <option value="SQLite">SQLite</option>
+        <option value="MSSQL">MSSQL</option>
+      </select>
+      <button class="btn" id="explain-btn" onclick="explain()">Explain Query</button>
+    </div>
+    <div class="examples">
+      <button onclick="setQuery(0)">SELECT JOIN</button>
+      <button onclick="setQuery(1)">Subquery</button>
+      <button onclick="setQuery(2)">Window Fn</button>
+      <button onclick="setQuery(3)">CTE</button>
+      <button onclick="setQuery(4)">GROUP BY</button>
+      <button onclick="setQuery(5)">UNION</button>
+      <button onclick="setQuery(6)">INSERT SELECT</button>
+      <button onclick="setQuery(7)">UPDATE JOIN</button>
+      <button onclick="setQuery(8)">DELETE</button>
+      <button onclick="setQuery(9)">CASE WHEN</button>
+    </div>
+  </div>
+
+  <div class="loading" id="loading"><div class="spinner"></div><p style="margin-top:1rem">Analyzing query...</p></div>
+  <div class="error" id="error"></div>
+
+  <div id="results">
+    <div class="summary" id="summary"></div>
+    <div class="card"><h3>Step-by-Step Breakdown</h3><div id="steps"></div></div>
+    <div class="card" id="perf-card"><h3>Performance Notes</h3><ul class="notes-list" id="performance"></ul></div>
+    <div class="card" id="issues-card"><h3>Potential Issues</h3><ul class="notes-list issues" id="issues"></ul></div>
+    <div class="card" id="optimized-card"><h3>Optimized Version</h3><pre class="optimized" id="optimized"></pre></div>
+  </div>
+</div>
+
+<script>
+const examples = [
+  `SELECT u.name, o.total\nFROM users u\nJOIN orders o ON u.id = o.user_id\nWHERE o.total > 100\nORDER BY o.total DESC;`,
+  `SELECT * FROM products\nWHERE price > (SELECT AVG(price) FROM products);`,
+  `SELECT name, salary,\n  RANK() OVER (PARTITION BY dept_id ORDER BY salary DESC) as rank\nFROM employees;`,
+  `WITH monthly_sales AS (\n  SELECT DATE_TRUNC('month', date) as month, SUM(amount) as total\n  FROM sales GROUP BY 1\n)\nSELECT * FROM monthly_sales WHERE total > 10000;`,
+  `SELECT category, COUNT(*) as cnt, AVG(price) as avg_price\nFROM products\nGROUP BY category\nHAVING COUNT(*) > 5;`,
+  `SELECT name, email FROM customers\nUNION\nSELECT name, email FROM leads;`,
+  `INSERT INTO archive (id, name, date)\nSELECT id, name, created_at\nFROM users WHERE active = false;`,
+  `UPDATE orders o\nSET status = 'cancelled'\nFROM users u\nWHERE o.user_id = u.id AND u.banned = true;`,
+  `DELETE FROM sessions\nWHERE last_active < NOW() - INTERVAL '30 days';`,
+  `SELECT name,\n  CASE WHEN score >= 90 THEN 'A'\n       WHEN score >= 80 THEN 'B'\n       ELSE 'C' END as grade\nFROM students;`
+];
+
+function setQuery(i) { document.getElementById('sql-editor').value = examples[i]; }
+
+async function explain() {
+  const sql = document.getElementById('sql-editor').value.trim();
+  if (!sql) return;
+  const dialect = document.getElementById('dialect').value;
+  const btn = document.getElementById('explain-btn');
+  const loading = document.getElementById('loading');
+  const error = document.getElementById('error');
+  const results = document.getElementById('results');
+
+  btn.disabled = true;
+  loading.style.display = 'block';
+  error.style.display = 'none';
+  results.style.display = 'none';
+
+  try {
+    const res = await fetch('/sql-explainer/api/explain', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sql, dialect })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    document.getElementById('summary').textContent = data.summary;
+    document.getElementById('steps').innerHTML = (data.steps || []).map(s =>
+      `<div class="step"><div class="step-num">${s.step}</div><div><div class="step-clause">${esc(s.clause)}</div><div class="step-explanation">${esc(s.explanation)}</div></div></div>`
+    ).join('');
+
+    const perf = document.getElementById('performance');
+    const perfCard = document.getElementById('perf-card');
+    if (data.performance_notes?.length) {
+      perf.innerHTML = data.performance_notes.map(n => `<li>${esc(n)}</li>`).join('');
+      perfCard.style.display = 'block';
+    } else perfCard.style.display = 'none';
+
+    const iss = document.getElementById('issues');
+    const issCard = document.getElementById('issues-card');
+    if (data.issues?.length) {
+      iss.innerHTML = data.issues.map(n => `<li>${esc(n)}</li>`).join('');
+      issCard.style.display = 'block';
+    } else issCard.style.display = 'none';
+
+    const opt = document.getElementById('optimized');
+    const optCard = document.getElementById('optimized-card');
+    if (data.optimized_version && data.optimized_version !== 'null') {
+      opt.textContent = data.optimized_version;
+      optCard.style.display = 'block';
+    } else optCard.style.display = 'none';
+
+    results.style.display = 'block';
+  } catch (e) {
+    error.textContent = e.message;
+    error.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    loading.style.display = 'none';
+  }
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// Basic syntax highlighting in textarea via overlay (simple keyword coloring on blur)
+const editor = document.getElementById('sql-editor');
+editor.addEventListener('keydown', e => { if (e.key === 'Tab') { e.preventDefault(); const s = editor.selectionStart; editor.value = editor.value.substring(0, s) + '  ' + editor.value.substring(editor.selectionEnd); editor.selectionStart = editor.selectionEnd = s + 2; }});
+</script>
+</body>
+</html>
