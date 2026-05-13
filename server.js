@@ -39,6 +39,19 @@ function extractJSON(text) {
   throw new Error('Could not parse AI response as JSON');
 }
 
+// --- RESUME SCANNER ---
+app.post('/resume-scanner/api/scan', async (req, res) => {
+  try {
+    const { text, role } = req.body;
+    if (!text || text.length < 50) return res.status(400).json({ error: 'Resume text too short (min 50 chars)' });
+    if (!role) return res.status(400).json({ error: 'Target role required' });
+    const result = await aiComplete(
+      `You are an expert ATS recruiter. Evaluate this resume against the role: "${role}". Return ONLY valid JSON: {"atsScore":0-100,"missingKeywords":["keywords the resume should have for this role"],"weakActionVerbs":["weak verbs found that should be replaced"],"formattingIssues":["structural problems"],"sectionBreakdown":{"Summary":"feedback","Experience":"feedback","Skills":"feedback","Education":"feedback"},"prioritizedFixes":["top 5 immediate actions to improve"]}`,
+      text.slice(0, 6000), 1024);
+    res.json(extractJSON(result));
+  } catch (e) { console.error(`[resume-scanner] ${e.message}`); res.status(500).json({ error: e.message }); }
+});
+
 // --- PORTFOLIO ROASTER ---
 const rateLimit = new Map();
 app.post('/portfolio-roaster/api/roast', async (req, res) => {
@@ -317,7 +330,7 @@ app.post('/interview-questions/api/generate', async (req, res) => {
 });
 
 // --- SERVE PROJECT STATIC FILES ---
-const projectDirs = ['portfolio-roaster','code-review','sql-explainer','cold-email','tech-stack-detector',
+const projectDirs = ['resume-scanner','portfolio-roaster','code-review','sql-explainer','cold-email','tech-stack-detector',
   'spam-detector','url-shortener','api-health','bundle-analyzer','webhook-tester','http-headers','interview-questions'];
 
 projectDirs.forEach(p => {

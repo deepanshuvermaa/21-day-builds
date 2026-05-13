@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Scanner — ATS Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--tangerine:#f69251;--ink:#181825;--stone:#636363;--pebble:#949494;--fog:#f7f7f7;--snow:#ffffff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:var(--fog);color:var(--ink);min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:40px 24px}
+header{text-align:center;margin-bottom:40px}
+header h1{font-size:28px;font-weight:600;letter-spacing:-0.3px;margin-bottom:6px}
+header p{font-size:14px;color:var(--stone)}
+.card{background:var(--snow);border-radius:16px;padding:24px;box-shadow:rgba(24,24,37,0.08) 0px 2px 8px -2px;margin-bottom:16px}
+label{font-size:12px;font-weight:500;color:var(--stone);display:block;margin-bottom:6px}
+input,textarea{width:100%;border:1px solid #e5e5e5;border-radius:8px;padding:10px 14px;font-size:14px;font-family:inherit;outline:none;transition:border .15s}
+input:focus,textarea:focus{border-color:var(--tangerine)}
+textarea{min-height:160px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.btn{width:100%;padding:12px;background:var(--tangerine);color:#000;font-size:14px;font-weight:500;border:none;border-radius:28px;cursor:pointer;margin-top:16px}
+.btn:hover{opacity:.9}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.drop-zone{border:2px dashed #ddd;border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:border .15s;margin-bottom:12px}
+.drop-zone:hover,.drop-zone.active{border-color:var(--tangerine)}
+.drop-zone p{font-size:13px;color:var(--pebble)}
+.drop-zone .file-name{font-size:13px;font-weight:500;color:var(--ink);margin-top:6px}
+#results{display:none}
+.score-ring{width:80px;height:80px;margin:0 auto 12px;position:relative}
+.score-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.score-ring circle{fill:none;stroke-width:6}
+.score-ring .bg{stroke:#eee}
+.score-ring .fill{stroke:var(--tangerine);stroke-linecap:round;transition:stroke-dasharray .6s}
+.score-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600}
+.section-title{font-size:11px;font-weight:600;color:var(--pebble);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px}
+.chip{display:inline-block;padding:4px 10px;margin:3px;border-radius:100px;font-size:12px;font-weight:500}
+.chip-red{background:#fef2f2;color:#dc2626}
+.chip-amber{background:#fffbeb;color:#d97706}
+.chip-green{background:#f0fdf4;color:#16a34a}
+.fix-item{padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13px;color:var(--ink);display:flex;gap:8px;align-items:flex-start}
+.fix-item:last-child{border:none}
+.fix-num{width:20px;height:20px;background:var(--fog);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--stone);flex-shrink:0}
+.breakdown{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.breakdown-item{padding:12px;background:var(--fog);border-radius:10px}
+.breakdown-item h4{font-size:12px;font-weight:600;margin-bottom:4px}
+.breakdown-item p{font-size:11px;color:var(--stone);line-height:1.4}
+.back-link{display:inline-block;margin-bottom:20px;font-size:13px;color:var(--stone);text-decoration:none}
+.back-link:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="/" class="back-link">← Back to all projects</a>
+  <header>
+    <h1>Resume Scanner</h1>
+    <p>Upload your resume and target role. Get ATS score, missing keywords, and prioritized fixes.</p>
+  </header>
+
+  <div id="input-section">
+    <div class="card">
+      <div class="row">
+        <div><label>Target Job Role</label><input type="text" id="role" placeholder="e.g., Senior Backend Engineer"></div>
+        <div><label>Industry (optional)</label><input type="text" id="industry" placeholder="e.g., Fintech, SaaS"></div>
+      </div>
+      <label>Resume Content</label>
+      <div class="drop-zone" id="dropZone">
+        <p>Paste your resume text below, or drop a .txt file here</p>
+        <div class="file-name" id="fileName"></div>
+      </div>
+      <textarea id="resumeText" placeholder="Paste your full resume text here..."></textarea>
+      <button class="btn" id="scanBtn" onclick="scan()">Analyze Resume</button>
+    </div>
+  </div>
+
+  <div id="results">
+    <div class="card" style="text-align:center">
+      <div class="score-ring">
+        <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15.9"/><circle class="fill" id="scoreCircle" cx="18" cy="18" r="15.9" stroke-dasharray="0 100"/></svg>
+        <div class="score-num" id="scoreNum">0</div>
+      </div>
+      <p style="font-size:13px;color:var(--stone)" id="scoreSummary">ATS Compatibility Score</p>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Priority Fixes</div>
+      <div id="fixes"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Missing Keywords</div>
+      <div id="keywords"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Weak Action Verbs</div>
+      <div id="verbs"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Section Breakdown</div>
+      <div class="breakdown" id="breakdown"></div>
+    </div>
+
+    <button class="btn" onclick="reset()" style="background:#eee;color:var(--ink)">Scan Another Resume</button>
+  </div>
+</div>
+
+<script>
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('active'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('active');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'text/plain') {
+    document.getElementById('fileName').textContent = file.name;
+    file.text().then(t => document.getElementById('resumeText').value = t);
+  }
+});
+
+async function scan() {
+  const role = document.getElementById('role').value.trim();
+  const text = document.getElementById('resumeText').value.trim();
+  if (!role) return alert('Enter a target role');
+  if (!text || text.length < 50) return alert('Paste your resume (min 50 chars)');
+
+  const btn = document.getElementById('scanBtn');
+  btn.disabled = true; btn.textContent = 'Analyzing...';
+
+  try {
+    const res = await fetch('/resume-scanner/api/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, role })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    showResults(data);
+  } catch (e) { alert('Error: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Analyze Resume'; }
+}
+
+function showResults(d) {
+  document.getElementById('input-section').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  // Score
+  document.getElementById('scoreNum').textContent = d.atsScore;
+  document.getElementById('scoreCircle').setAttribute('stroke-dasharray', `${d.atsScore} 100`);
+  document.getElementById('scoreCircle').style.stroke = d.atsScore >= 80 ? '#16a34a' : d.atsScore >= 60 ? '#d97706' : '#dc2626';
+  // Fixes
+  document.getElementById('fixes').innerHTML = (d.prioritizedFixes || []).map((f, i) => `<div class="fix-item"><span class="fix-num">${i+1}</span>${f}</div>`).join('');
+  // Keywords
+  document.getElementById('keywords').innerHTML = (d.missingKeywords || []).map(k => `<span class="chip chip-red">${k}</span>`).join('') || '<span class="chip chip-green">None missing</span>';
+  // Verbs
+  document.getElementById('verbs').innerHTML = (d.weakActionVerbs || []).map(v => `<span class="chip chip-amber">${v}</span>`).join('') || '<span class="chip chip-green">All strong</span>';
+  // Breakdown
+  const bd = d.sectionBreakdown || {};
+  document.getElementById('breakdown').innerHTML = Object.entries(bd).map(([k,v]) => `<div class="breakdown-item"><h4>${k}</h4><p>${v}</p></div>`).join('');
+}
+
+function reset() {
+  document.getElementById('input-section').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+}
+</script>
+</body>
+</html>
