@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Health Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1a1a;min-height:100vh}
+.accent{color:#f69251}
+.hero{text-align:center;padding:3rem 1rem 2rem}
+.hero h1{font-size:2.2rem;font-weight:700;margin-bottom:.5rem}
+.hero p{color:#666;font-size:1.05rem}
+.container{max-width:900px;margin:0 auto;padding:0 1rem 3rem}
+.input-row{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.input-row input{flex:1;min-width:200px;padding:.7rem 1rem;border:1px solid #ddd;border-radius:8px;font-size:.95rem;font-family:inherit}
+.input-row input:focus{outline:none;border-color:#f69251}
+.btn{background:#f69251;color:#fff;border:none;padding:.7rem 1.4rem;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;font-family:inherit}
+.btn:hover{background:#e07d3a}
+.btn-sm{padding:.4rem .8rem;font-size:.8rem;border-radius:6px}
+.btn-outline{background:transparent;border:2px solid #f69251;color:#f69251}
+.btn-outline:hover{background:#f69251;color:#fff}
+.btn-danger{background:#e74c3c}
+.btn-danger:hover{background:#c0392b}
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.cards{display:grid;gap:1rem}
+.card{background:#fff;border-radius:12px;padding:1.2rem 1.5rem;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem}
+.card-name{font-weight:600;font-size:1.05rem;word-break:break-all}
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:20px;font-size:.75rem;font-weight:600;color:#fff}
+.badge-up{background:#27ae60}
+.badge-down{background:#e74c3c}
+.badge-slow{background:#f39c12}
+.badge-pending{background:#95a5a6}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.6rem;margin-bottom:.8rem}
+.stat-label{font-size:.75rem;color:#888;text-transform:uppercase}
+.stat-value{font-size:1rem;font-weight:600}
+.ssl-info{font-size:.85rem;color:#555;margin-bottom:.8rem;padding:.5rem;background:#f0f0f0;border-radius:6px}
+.ssl-warn{color:#e74c3c;font-weight:600}
+.sparkline{display:flex;align-items:flex-end;gap:2px;height:30px;margin-bottom:.5rem}
+.sparkline .bar{flex:1;background:#f69251;border-radius:2px 2px 0 0;min-width:3px;transition:height .2s}
+.sparkline .bar-null{background:#e0e0e0}
+.card-footer{display:flex;justify-content:flex-end}
+</style>
+</head>
+<body>
+<section class="hero">
+  <h1>API Health <span class="accent">Dashboard</span></h1>
+  <p>Monitor endpoint uptime, response time &amp; SSL status</p>
+</section>
+<div class="container">
+  <div class="input-row">
+    <input type="url" id="urlInput" placeholder="https://api.example.com/health" required>
+    <input type="text" id="nameInput" placeholder="Name (optional)">
+    <button class="btn" onclick="addMonitor()">Add Monitor</button>
+  </div>
+  <div class="toolbar">
+    <span id="count"></span>
+    <button class="btn btn-sm btn-outline" onclick="checkAll()">Check All Now</button>
+  </div>
+  <div class="cards" id="cards"></div>
+</div>
+<script>
+const API = '';
+let autoInterval;
+
+async function fetchMonitors() {
+  const res = await fetch(API + '/api-health/api/monitors');
+  render(await res.json());
+}
+
+async function addMonitor() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) return;
+  const name = document.getElementById('nameInput').value.trim();
+  await fetch(API + '/api-health/api/monitors', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ url, name }) });
+  document.getElementById('urlInput').value = '';
+  document.getElementById('nameInput').value = '';
+  fetchMonitors();
+}
+
+async function checkAll() {
+  await fetch(API + '/api/monitors/check', { method: 'POST' });
+  fetchMonitors();
+}
+
+async function remove(id) {
+  await fetch(API + '/api/monitors/' + id, { method: 'DELETE' });
+  fetchMonitors();
+}
+
+function render(monitors) {
+  document.getElementById('count').textContent = monitors.length + ' endpoint' + (monitors.length !== 1 ? 's' : '');
+  const container = document.getElementById('cards');
+  container.innerHTML = monitors.map(m => {
+    const badge = m.lastStatus === 'UP' ? 'badge-up' : m.lastStatus === 'DOWN' ? 'badge-down' : m.lastStatus === 'SLOW' ? 'badge-slow' : 'badge-pending';
+    const uptime = m.totalChecks ? Math.round((m.upChecks / m.totalChecks) * 100) : 0;
+    const maxRT = Math.max(...m.history.filter(v => v !== null), 1);
+    const sparkline = m.history.map(v => v === null ? '<div class="bar bar-null" style="height:100%"></div>' : `<div class="bar" style="height:${Math.max((v/maxRT)*100,5)}%"></div>`).join('');
+    const ssl = m.ssl ? `<div class="ssl-info"><strong>SSL:</strong> Issuer: ${m.ssl.issuer} | Expires: ${m.ssl.expiry} | <span class="${m.ssl.daysUntilExpiry < 30 ? 'ssl-warn' : ''}">${m.ssl.daysUntilExpiry} days left</span></div>` : '';
+    return `<div class="card">
+      <div class="card-header"><span class="card-name">${m.name}</span><span class="badge ${badge}">${m.lastStatus || 'PENDING'}</span></div>
+      <div class="stats">
+        <div><div class="stat-label">Response Time</div><div class="stat-value">${m.lastResponseTime !== null ? m.lastResponseTime + ' ms' : '—'}</div></div>
+        <div><div class="stat-label">Uptime</div><div class="stat-value">${uptime}%</div></div>
+        <div><div class="stat-label">Last Checked</div><div class="stat-value">${m.lastChecked ? new Date(m.lastChecked).toLocaleTimeString() : '—'}</div></div>
+      </div>
+      ${ssl}
+      <div class="sparkline">${sparkline}</div>
+      <div class="card-footer"><button class="btn btn-sm btn-danger" onclick="remove(${m.id})">Remove</button></div>
+    </div>`;
+  }).join('');
+}
+
+fetchMonitors();
+autoInterval = setInterval(fetchMonitors, 30000);
+</script>
+</body>
+</html>

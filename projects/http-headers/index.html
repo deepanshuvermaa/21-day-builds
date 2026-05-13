@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTTP Header Security Analyzer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f7f7f7; color: #1a1a1a; min-height: 100vh; }
+    .container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .hero p { color: #555; font-size: 1.05rem; max-width: 500px; margin: 0 auto 2rem; }
+    .input-group { display: flex; gap: 0.5rem; max-width: 550px; margin: 0 auto; }
+    .input-group input { flex: 1; padding: 0.75rem 1rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; font-family: inherit; }
+    .input-group input:focus { outline: none; border-color: #f69251; }
+    .btn { background: #f69251; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn:hover { background: #e5813f; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error { color: #d32f2f; text-align: center; margin-top: 1rem; }
+    .results { margin-top: 2rem; display: none; }
+    .grade-card { text-align: center; background: #fff; border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .grade { font-size: 3.5rem; font-weight: 700; }
+    .grade-label { color: #555; margin-top: 0.25rem; }
+    .section { background: #fff; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .section h2 { font-size: 1.1rem; margin-bottom: 1rem; }
+    .finding { border-bottom: 1px solid #eee; padding: 0.75rem 0; }
+    .finding:last-child { border-bottom: none; }
+    .finding-header { display: flex; align-items: center; gap: 0.5rem; font-weight: 500; }
+    .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+    .badge-present { background: #e8f5e9; color: #2e7d32; }
+    .badge-missing { background: #fbe9e7; color: #c62828; }
+    .badge-deprecated { background: #fff3e0; color: #e65100; font-size: 0.65rem; margin-left: 0.25rem; }
+    .finding-value { font-size: 0.85rem; color: #555; margin-top: 0.25rem; word-break: break-all; }
+    .finding-detail { font-size: 0.82rem; color: #666; margin-top: 0.4rem; background: #fafafa; padding: 0.5rem 0.75rem; border-radius: 6px; }
+    .finding-detail p { margin-bottom: 0.25rem; }
+    .finding-detail strong { color: #333; }
+    .server-info p { margin-bottom: 0.3rem; font-size: 0.9rem; }
+    .server-info span { color: #555; }
+    .collapsible { cursor: pointer; user-select: none; }
+    .collapsible::after { content: ' ▸'; }
+    .collapsible.open::after { content: ' ▾'; }
+    .raw-headers { display: none; margin-top: 0.75rem; font-size: 0.8rem; background: #f9f9f9; padding: 1rem; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>HTTP Header Security Analyzer</h1>
+      <p>Analyze any website's HTTP security headers. Get a grade and actionable fixes.</p>
+      <div class="input-group">
+        <input type="text" id="urlInput" placeholder="https://example.com" aria-label="Website URL">
+        <button class="btn" id="analyzeBtn" onclick="analyze()">Analyze</button>
+      </div>
+      <p class="error" id="error"></p>
+    </div>
+    <div class="results" id="results">
+      <div class="grade-card">
+        <div class="grade" id="grade"></div>
+        <div class="grade-label">Security Score: <span id="score"></span>/100</div>
+      </div>
+      <div class="section" id="serverSection" style="display:none">
+        <h2>Server Info</h2>
+        <div class="server-info" id="serverInfo"></div>
+      </div>
+      <div class="section">
+        <h2>Security Headers</h2>
+        <div id="findings"></div>
+      </div>
+      <div class="section">
+        <h2 class="collapsible" onclick="toggleRaw()">Raw Headers</h2>
+        <div class="raw-headers" id="rawHeaders"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const gradeColors = { 'A+': '#2e7d32', A: '#388e3c', B: '#f9a825', C: '#ef6c00', D: '#d84315', F: '#b71c1c' };
+
+    document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') analyze(); });
+
+    async function analyze() {
+      const url = document.getElementById('urlInput').value.trim();
+      const err = document.getElementById('error');
+      const btn = document.getElementById('analyzeBtn');
+      err.textContent = '';
+      if (!url) { err.textContent = 'Please enter a URL'; return; }
+      btn.disabled = true; btn.textContent = 'Analyzing...';
+      try {
+        const res = await fetch('/http-headers/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+        const data = await res.json();
+        if (data.error) { err.textContent = data.error; return; }
+        render(data);
+      } catch (e) { err.textContent = 'Request failed'; }
+      finally { btn.disabled = false; btn.textContent = 'Analyze'; }
+    }
+
+    function render(data) {
+      document.getElementById('results').style.display = 'block';
+      const gradeEl = document.getElementById('grade');
+      gradeEl.textContent = data.grade;
+      gradeEl.style.color = gradeColors[data.grade] || '#333';
+      document.getElementById('score').textContent = data.score;
+
+      const si = data.serverInfo;
+      const serverSection = document.getElementById('serverSection');
+      if (si.server || si.poweredBy || si.via) {
+        serverSection.style.display = 'block';
+        document.getElementById('serverInfo').innerHTML = [
+          si.server ? `<p><strong>Server:</strong> <span>${esc(si.server)}</span></p>` : '',
+          si.poweredBy ? `<p><strong>X-Powered-By:</strong> <span>${esc(si.poweredBy)}</span></p>` : '',
+          si.via ? `<p><strong>Via:</strong> <span>${esc(si.via)}</span></p>` : '',
+        ].join('');
+      } else { serverSection.style.display = 'none'; }
+
+      document.getElementById('findings').innerHTML = data.findings.map(f => `
+        <div class="finding">
+          <div class="finding-header">
+            <span class="badge ${f.present ? 'badge-present' : 'badge-missing'}">${f.present ? '✓ Present' : '✗ Missing'}</span>
+            ${f.header}${f.deprecated ? '<span class="badge badge-deprecated">deprecated</span>' : ''}
+          </div>
+          ${f.present ? `<div class="finding-value">${esc(f.value)}</div>` : ''}
+          ${!f.present ? `<div class="finding-detail"><p><strong>What it does:</strong> ${esc(f.desc)}</p><p><strong>Risk:</strong> ${esc(f.risk)}</p><p><strong>Recommended:</strong> <code>${esc(f.recommendation)}</code></p></div>` : ''}
+        </div>`).join('');
+
+      document.getElementById('rawHeaders').textContent = Object.entries(data.headers).map(([k, v]) => `${k}: ${v}`).join('\n');
+    }
+
+    function toggleRaw() {
+      const el = document.getElementById('rawHeaders');
+      const h = el.previousElementSibling;
+      const open = el.style.display === 'block';
+      el.style.display = open ? 'none' : 'block';
+      h.classList.toggle('open', !open);
+    }
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  </script>
+</body>
+</html>

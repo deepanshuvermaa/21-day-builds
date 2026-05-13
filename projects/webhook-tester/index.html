@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webhook Tester</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f7f7f7; color: #1a1a1a; min-height: 100vh; }
+    .container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .hero p { color: #555; max-width: 500px; margin: 0 auto 1.5rem; line-height: 1.6; }
+    .btn { background: #f69251; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn:hover { background: #e07d3a; }
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+    .btn-outline { background: none; border: 1px solid #ddd; color: #555; }
+    .btn-outline:hover { background: #eee; }
+    .endpoint-bar { display: flex; align-items: center; gap: 0.5rem; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 0.75rem 1rem; margin: 1.5rem 0; }
+    .endpoint-bar code { flex: 1; font-size: 0.9rem; color: #333; word-break: break-all; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .toolbar h2 { font-size: 1.1rem; font-weight: 600; }
+    .request-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+    .request-header { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .method-badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; color: #fff; }
+    .method-GET { background: #22c55e; }
+    .method-POST { background: #3b82f6; }
+    .method-PUT { background: #f59e0b; }
+    .method-DELETE { background: #ef4444; }
+    .method-PATCH { background: #8b5cf6; }
+    .timestamp { font-size: 0.8rem; color: #888; }
+    .ip { font-size: 0.8rem; color: #888; }
+    .section-toggle { background: none; border: none; color: #f69251; font-size: 0.8rem; cursor: pointer; font-weight: 500; font-family: inherit; margin-top: 0.5rem; }
+    .section-content { margin-top: 0.5rem; background: #f9f9f9; border-radius: 4px; padding: 0.75rem; font-size: 0.8rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all; display: none; }
+    .section-content.open { display: block; }
+    .query-params { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+    #app-section { display: none; }
+    .empty { text-align: center; color: #999; padding: 2rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero" id="hero">
+      <h1>Webhook Tester</h1>
+      <p>Generate a unique URL. Send any HTTP request to it. See headers, body, method in real-time.</p>
+      <button class="btn" onclick="createEndpoint()">Create New Endpoint</button>
+    </div>
+    <div id="app-section">
+      <div class="endpoint-bar">
+        <code id="endpoint-url"></code>
+        <button class="btn btn-sm" onclick="copyUrl()">Copy</button>
+      </div>
+      <div class="toolbar">
+        <h2>Captured Requests</h2>
+        <button class="btn btn-sm btn-outline" onclick="clearHistory()">Clear History</button>
+      </div>
+      <div id="requests-list"><p class="empty">No requests captured yet. Send a request to your URL.</p></div>
+    </div>
+  </div>
+  <script>
+    let endpointId = null;
+    let pollInterval = null;
+
+    async function createEndpoint() {
+      const res = await fetch('/webhook-tester/api/endpoints', { method: 'POST' });
+      const data = await res.json();
+      endpointId = data.id;
+      const url = `${location.origin}/hook/${endpointId}`;
+      document.getElementById('endpoint-url').textContent = url;
+      document.getElementById('hero').style.display = 'none';
+      document.getElementById('app-section').style.display = 'block';
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(fetchRequests, 2000);
+      fetchRequests();
+    }
+
+    function copyUrl() {
+      navigator.clipboard.writeText(document.getElementById('endpoint-url').textContent);
+    }
+
+    async function clearHistory() {
+      await fetch(`/api/endpoints/${endpointId}`, { method: 'DELETE' });
+      fetchRequests();
+    }
+
+    async function fetchRequests() {
+      const res = await fetch(`/api/endpoints/${endpointId}/requests`);
+      const reqs = await res.json();
+      const list = document.getElementById('requests-list');
+      if (!reqs.length) { list.innerHTML = '<p class="empty">No requests captured yet. Send a request to your URL.</p>'; return; }
+      list.innerHTML = reqs.map((r, i) => renderCard(r, i)).join('');
+    }
+
+    function renderCard(r, i) {
+      const methodClass = `method-${r.method}`;
+      const queryStr = Object.keys(r.query || {}).length ? `<div class="query-params"><strong>Query:</strong> ${Object.entries(r.query).map(([k,v])=>`${k}=${v}`).join('&')}</div>` : '';
+      const bodyStr = r.body && Object.keys(r.body).length ? JSON.stringify(r.body, null, 2) : (typeof r.body === 'string' && r.body ? r.body : '');
+      const bodySection = bodyStr ? `<button class="section-toggle" onclick="toggle('body-${i}')">Body</button><div class="section-content" id="body-${i}">${escHtml(bodyStr)}</div>` : '';
+      return `<div class="request-card">
+        <div class="request-header">
+          <span class="method-badge ${methodClass}">${r.method}</span>
+          <span class="timestamp">${new Date(r.timestamp).toLocaleString()}</span>
+          <span class="ip">${r.ip}</span>
+        </div>
+        ${queryStr}
+        <button class="section-toggle" onclick="toggle('hdr-${i}')">Headers</button>
+        <div class="section-content" id="hdr-${i}">${escHtml(JSON.stringify(r.headers, null, 2))}</div>
+        ${bodySection}
+      </div>`;
+    }
+
+    function toggle(id) { document.getElementById(id).classList.toggle('open'); }
+    function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  </script>
+</body>
+</html>

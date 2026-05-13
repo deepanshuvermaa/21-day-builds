@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bundle Size Analyzer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f7f7f7; color: #1a1a1a; min-height: 100vh; }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .hero h1 span { color: #f69251; }
+    .hero p { color: #666; font-size: 1.05rem; }
+    textarea { width: 100%; height: 200px; border: 2px solid #e0e0e0; border-radius: 10px; padding: 1rem; font-family: 'Inter', monospace; font-size: 0.9rem; resize: vertical; transition: border-color 0.2s; }
+    textarea:focus { outline: none; border-color: #f69251; }
+    .btn { background: #f69251; color: #fff; border: none; padding: 0.8rem 2rem; font-size: 1rem; font-weight: 600; border-radius: 8px; cursor: pointer; margin-top: 1rem; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .results { margin-top: 2rem; }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat { background: #fff; border-radius: 10px; padding: 1.2rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .stat .value { font-size: 1.5rem; font-weight: 700; color: #f69251; }
+    .stat .label { font-size: 0.8rem; color: #888; margin-top: 0.3rem; }
+    .controls { display: flex; gap: 0.8rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .controls select, .controls button { padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid #ddd; font-family: 'Inter', sans-serif; font-size: 0.85rem; background: #fff; cursor: pointer; }
+    .card { background: #fff; border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 0.8rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .card.heavy { border-left: 4px solid #e74c3c; }
+    .card .name { font-weight: 600; }
+    .card .version { color: #888; font-size: 0.85rem; }
+    .card .size { font-weight: 600; color: #f69251; }
+    .card .size.heavy { color: #e74c3c; }
+    .card .desc { width: 100%; font-size: 0.82rem; color: #666; }
+    .card .badge { font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 500; }
+    .badge.deprecated { background: #fdecea; color: #e74c3c; }
+    .badge.alt { background: #eafaf1; color: #27ae60; }
+    .badge.type { background: #eef2ff; color: #4f46e5; }
+    .error { color: #e74c3c; margin-top: 1rem; }
+    .loading { text-align: center; padding: 2rem; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>📦 Bundle <span>Analyzer</span></h1>
+      <p>Paste your package.json to analyze bundle sizes and find optimization opportunities</p>
+    </div>
+    <textarea id="input" placeholder='Paste your package.json content here...'></textarea>
+    <button class="btn" id="analyzeBtn" onclick="analyze()">Analyze</button>
+    <div id="results" class="results"></div>
+  </div>
+  <script>
+    let lastData = null;
+
+    async function analyze() {
+      const btn = document.getElementById('analyzeBtn');
+      const resultsDiv = document.getElementById('results');
+      let pkg;
+      try { pkg = JSON.parse(document.getElementById('input').value); }
+      catch { return resultsDiv.innerHTML = '<p class="error">Invalid JSON. Please paste valid package.json content.</p>'; }
+
+      btn.disabled = true; btn.textContent = 'Analyzing...';
+      resultsDiv.innerHTML = '<div class="loading">Fetching bundle sizes... this may take a moment.</div>';
+
+      try {
+        const res = await fetch('/bundle-analyzer/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pkg) });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        lastData = data;
+        render(data, 'size');
+      } catch (e) { resultsDiv.innerHTML = `<p class="error">${e.message}</p>`; }
+      finally { btn.disabled = false; btn.textContent = 'Analyze'; }
+    }
+
+    function formatSize(bytes) {
+      if (!bytes) return 'N/A';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(2) + ' MB';
+    }
+
+    function render(data, sort) {
+      let deps = [...data.dependencies];
+      if (sort === 'size') deps.sort((a, b) => (b.size || 0) - (a.size || 0));
+      else deps.sort((a, b) => a.name.localeCompare(b.name));
+
+      const html = `
+        <div class="summary">
+          <div class="stat"><div class="value">${formatSize(data.totalSize)}</div><div class="label">Total Install Size</div></div>
+          <div class="stat"><div class="value">${data.counts.direct}</div><div class="label">Direct Deps</div></div>
+          <div class="stat"><div class="value">${data.counts.dev}</div><div class="label">Dev Deps</div></div>
+          <div class="stat"><div class="value">${data.counts.peer}</div><div class="label">Peer Deps</div></div>
+        </div>
+        <div class="controls">
+          <select onchange="render(lastData, this.value)">
+            <option value="size" ${sort==='size'?'selected':''}>Sort by Size</option>
+            <option value="name" ${sort==='name'?'selected':''}>Sort by Name</option>
+          </select>
+          <button onclick="exportReport()">Export Report</button>
+        </div>
+        <div>${deps.map(d => {
+          const heavy = d.size > 512000;
+          return `<div class="card ${heavy ? 'heavy' : ''}">
+            <div><span class="name">${d.name}</span> <span class="version">${d.version}</span> <span class="badge type">${d.type}</span>
+            ${d.deprecated ? '<span class="badge deprecated">⚠ Deprecated</span>' : ''}
+            ${d.alternative ? `<span class="badge alt">→ ${d.alternative.alt}</span>` : ''}</div>
+            <div class="size ${heavy ? 'heavy' : ''}">${formatSize(d.size)}</div>
+            ${d.description ? `<div class="desc">${d.description}</div>` : ''}
+            ${d.alternative ? `<div class="desc" style="color:#27ae60">💡 Consider <b>${d.alternative.alt}</b>: ${d.alternative.reason}</div>` : ''}
+          </div>`;
+        }).join('')}</div>`;
+      document.getElementById('results').innerHTML = html;
+    }
+
+    function exportReport() {
+      if (!lastData) return;
+      let txt = `Bundle Analysis Report\n${'='.repeat(40)}\nTotal Size: ${formatSize(lastData.totalSize)}\nDependencies: ${lastData.counts.total} (${lastData.counts.direct} direct, ${lastData.counts.dev} dev, ${lastData.counts.peer} peer)\n\n`;
+      lastData.dependencies.sort((a, b) => (b.size || 0) - (a.size || 0)).forEach(d => {
+        txt += `${d.name}@${d.version} [${d.type}] — ${formatSize(d.size)}${d.deprecated ? ' ⚠ DEPRECATED' : ''}${d.alternative ? ` → Use ${d.alternative.alt}` : ''}\n`;
+      });
+      const blob = new Blob([txt], { type: 'text/plain' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'bundle-report.txt'; a.click();
+    }
+  </script>
+</body>
+</html>

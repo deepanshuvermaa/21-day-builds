@@ -4,86 +4,44 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>21 Days, 21 Products — Deepanshu Verma</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --tangerine: #f69251;
-  --ink: #181825;
-  --graphite: #484758;
-  --stone: #636363;
-  --pebble: #949494;
-  --fog: #f7f7f7;
-  --snow: #ffffff;
-  --shadow: rgba(24,24,37,0.12) 0px 2px 3px -2px;
-  --shadow-btn: rgba(0,0,0,0.04) 0px 1px 2px, rgba(0,0,0,0.02) 0px 2px 4px, rgba(0,0,0,0.02) 0px 4px 8px;
-}
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: var(--fog); color: var(--ink); -webkit-font-smoothing: antialiased; }
-
-/* Nav */
-nav { position: sticky; top: 16px; z-index: 100; max-width: 1200px; margin: 16px auto; padding: 14px 24px; background: var(--snow); border-radius: 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow); }
-.nav-logo { font-size: 15px; font-weight: 500; color: var(--ink); letter-spacing: -0.02em; }
-.nav-logo span { color: var(--pebble); font-weight: 400; }
-.nav-links { display: flex; gap: 24px; align-items: center; }
-.nav-links a { font-size: 14px; color: var(--stone); text-decoration: none; font-weight: 400; letter-spacing: -0.01em; }
-.nav-links a:hover { color: var(--ink); }
-.btn-cta { display: inline-flex; align-items: center; gap: 6px; padding: 10px 22px; background: var(--tangerine); color: #000; font-size: 14px; font-weight: 500; border-radius: 28px; text-decoration: none; border: none; cursor: pointer; box-shadow: var(--shadow-btn); letter-spacing: -0.01em; }
-.btn-cta:hover { opacity: 0.9; }
-
-/* Hero */
-.hero { max-width: 1200px; margin: 0 auto; padding: 120px 24px 80px; text-align: center; }
-.hero h1 { font-size: clamp(36px, 6vw, 70px); font-weight: 400; line-height: 1.15; letter-spacing: -0.7px; color: #000; margin-bottom: 16px; }
-.hero p { font-size: 18px; color: var(--stone); line-height: 1.5; max-width: 560px; margin: 0 auto 32px; letter-spacing: -0.01em; }
-.hero-meta { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; }
-.hero-meta span { font-size: 13px; color: var(--pebble); letter-spacing: -0.01em; }
-.hero-meta strong { color: var(--ink); font-weight: 500; }
-
-/* Grid */
-.section { max-width: 1200px; margin: 0 auto; padding: 0 24px 96px; }
-.section-label { display: inline-block; padding: 6px 14px; background: var(--snow); border-radius: 100px; font-size: 12px; font-weight: 500; color: var(--graphite); margin-bottom: 16px; letter-spacing: -0.01em; }
-.section h2 { font-size: clamp(28px, 4vw, 50px); font-weight: 400; line-height: 1.2; letter-spacing: -0.5px; color: #000; margin-bottom: 12px; }
-.section > p { font-size: 16px; color: var(--stone); line-height: 1.5; margin-bottom: 40px; max-width: 600px; }
-
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
-
-/* Card */
-.card { background: var(--snow); border-radius: 24px; padding: 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; transition: transform 0.15s, box-shadow 0.15s; }
-.card:hover { transform: translateY(-2px); box-shadow: rgba(24,24,37,0.16) 0px 8px 24px -8px; }
-.card-screenshot { width: 100%; aspect-ratio: 16/9; background: var(--fog); border-radius: 12px; margin-bottom: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; }
-.card-screenshot .browser-dots { position: absolute; top: 10px; left: 12px; display: flex; gap: 5px; }
-.card-screenshot .browser-dots span { width: 8px; height: 8px; border-radius: 50%; }
-.card-screenshot .browser-dots span:nth-child(1) { background: #c97b84; }
-.card-screenshot .browser-dots span:nth-child(2) { background: #f69251; }
-.card-screenshot .browser-dots span:nth-child(3) { background: #8b8b8b; }
-.card-screenshot .mock-content { display: flex; flex-direction: column; gap: 6px; padding: 28px 16px 12px; width: 100%; }
-.card-screenshot .mock-bar { height: 8px; border-radius: 4px; background: #e5e5e5; }
-.card-screenshot .mock-bar.w1 { width: 60%; }
-.card-screenshot .mock-bar.w2 { width: 80%; }
-.card-screenshot .mock-bar.w3 { width: 45%; }
-.card-screenshot .mock-bar.accent { background: var(--tangerine); opacity: 0.4; width: 30%; }
-
-.card-day { font-size: 11px; font-weight: 500; color: var(--pebble); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
-.card h3 { font-size: 18px; font-weight: 500; color: #000; margin-bottom: 8px; letter-spacing: -0.02em; line-height: 1.3; }
-.card p { font-size: 14px; color: var(--stone); line-height: 1.5; flex: 1; margin-bottom: 16px; letter-spacing: -0.01em; }
-.card-footer { display: flex; align-items: center; justify-content: space-between; }
-.card-tag { font-size: 11px; padding: 4px 10px; background: var(--fog); border-radius: 100px; color: var(--graphite); font-weight: 500; }
-.card-link { font-size: 13px; font-weight: 500; color: #000; text-decoration: none; padding: 8px 18px; background: var(--tangerine); border-radius: 28px; box-shadow: var(--shadow-btn); }
-.card-link:hover { opacity: 0.9; }
-
-/* Footer */
-footer { max-width: 1200px; margin: 0 auto; padding: 40px 24px; border-top: 1px solid #e8e8e8; text-align: center; }
-footer p { font-size: 13px; color: var(--pebble); }
-
-@media (max-width: 700px) {
-  nav { margin: 8px; border-radius: 16px; }
-  .nav-links { display: none; }
-  .grid { grid-template-columns: 1fr; }
-  .hero { padding: 80px 24px 48px; }
-}
+:root{--tangerine:#f69251;--ink:#181825;--graphite:#484758;--stone:#636363;--pebble:#949494;--fog:#f7f7f7;--snow:#ffffff;--shadow:rgba(24,24,37,0.12) 0px 2px 3px -2px;--shadow-btn:rgba(0,0,0,0.04) 0px 1px 2px,rgba(0,0,0,0.02) 0px 2px 4px,rgba(0,0,0,0.02) 0px 4px 8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:var(--fog);color:var(--ink);-webkit-font-smoothing:antialiased}
+nav{position:sticky;top:16px;z-index:100;max-width:1200px;margin:16px auto;padding:14px 24px;background:var(--snow);border-radius:32px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)}
+.nav-logo{font-size:15px;font-weight:600;color:var(--ink);letter-spacing:-0.02em}
+.nav-logo span{color:var(--pebble);font-weight:400}
+.nav-links{display:flex;gap:20px;align-items:center}
+.nav-links a{font-size:13px;color:var(--stone);text-decoration:none;font-weight:400}
+.nav-links a:hover{color:var(--ink)}
+.btn-cta{padding:9px 20px;background:var(--tangerine);color:#000;font-size:13px;font-weight:500;border-radius:28px;text-decoration:none;box-shadow:var(--shadow-btn)}
+.hero{max-width:1200px;margin:0 auto;padding:100px 24px 64px;text-align:center}
+.hero h1{font-size:clamp(32px,5.5vw,64px);font-weight:600;line-height:1.15;letter-spacing:-0.7px;color:#000;margin-bottom:14px}
+.hero p{font-size:17px;color:var(--stone);line-height:1.6;max-width:540px;margin:0 auto 28px;letter-spacing:-0.01em}
+.hero-stats{display:flex;justify-content:center;gap:28px;flex-wrap:wrap}
+.hero-stats span{font-size:12px;color:var(--pebble)}
+.hero-stats strong{color:var(--ink);font-weight:600}
+.section{max-width:1200px;margin:0 auto;padding:0 24px 80px}
+.section-label{display:inline-block;padding:5px 12px;background:var(--snow);border-radius:100px;font-size:11px;font-weight:500;color:var(--graphite);margin-bottom:12px;letter-spacing:0.02em}
+.section h2{font-size:clamp(24px,3.5vw,40px);font-weight:600;line-height:1.2;letter-spacing:-0.4px;color:#000;margin-bottom:8px}
+.section>p{font-size:15px;color:var(--stone);line-height:1.5;margin-bottom:32px;max-width:520px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.card{background:var(--snow);border-radius:20px;padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}
+.card:hover{transform:translateY(-2px);box-shadow:rgba(24,24,37,0.14) 0px 8px 20px -6px}
+.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-day{font-size:10px;font-weight:600;color:var(--pebble);text-transform:uppercase;letter-spacing:0.06em}
+.card-tag{font-size:10px;padding:3px 8px;background:var(--fog);border-radius:100px;color:var(--graphite);font-weight:500}
+.card h3{font-size:16px;font-weight:600;color:#000;margin-bottom:6px;letter-spacing:-0.02em}
+.card p{font-size:13px;color:var(--stone);line-height:1.5;flex:1;margin-bottom:14px}
+.card-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;color:#000;padding:7px 16px;background:var(--tangerine);border-radius:28px;text-decoration:none;box-shadow:var(--shadow-btn);align-self:flex-start}
+.card-link:hover{opacity:.9}
+footer{max-width:1200px;margin:0 auto;padding:32px 24px;border-top:1px solid #eee;text-align:center}
+footer p{font-size:12px;color:var(--pebble)}
+@media(max-width:700px){nav{margin:8px;border-radius:16px}.nav-links a:not(.btn-cta){display:none}.grid{grid-template-columns:1fr}.hero{padding:72px 24px 48px}}
 </style>
 </head>
 <body>
-
 <nav>
   <div class="nav-logo">21 builds <span>/ deepanshu</span></div>
   <div class="nav-links">
@@ -95,211 +53,61 @@ footer p { font-size: 13px; color: var(--pebble); }
 </nav>
 
 <section class="hero">
-  <h1>21 days. 21 products.<br>Zero excuses.</h1>
-  <p>Every project designed, built, and shipped from scratch — one per day. Real tools, real users, real code. Each link is independently shareable.</p>
-  <div class="hero-meta">
-    <span><strong>21</strong> products shipped</span>
-    <span><strong>6</strong> on GitHub Pages</span>
-    <span><strong>14</strong> AI-powered tools</span>
-    <span><strong>1</strong> CLI tool</span>
+  <h1>21 days. 21 products.<br>Each solves a real problem.</h1>
+  <p>Developer tools, security analyzers, and infrastructure utilities — built from scratch, one per day. Every link is independently shareable.</p>
+  <div class="hero-stats">
+    <span><strong>21</strong> shipped</span>
+    <span><strong>8</strong> static tools</span>
+    <span><strong>13</strong> server-side</span>
+    <span><strong>0</strong> gimmicks</span>
   </div>
 </section>
 
 <section class="section" id="projects">
-  <span class="section-label">Phase 1 — Attention</span>
-  <h2>Week one builds</h2>
-  <p>Quick, visible, shareable tools that prove you can ship daily.</p>
-
+  <span class="section-label">Developer Tools</span>
+  <h2>Tools developers actually use</h2>
+  <p>Code review, SQL analysis, regex testing, commit generation — daily workflow tools.</p>
   <div class="grid">
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w2"></div><div class="mock-bar w1"></div><div class="mock-bar accent"></div><div class="mock-bar w3"></div></div></div>
-      <div class="card-day">Day 01</div>
-      <h3>Resume Scanner</h3>
-      <p>Upload a PDF resume, get an ATS compatibility score, missing keywords, weak verbs, and a prioritized fix list powered by AI.</p>
-      <div class="card-footer"><span class="card-tag">Express + AI</span><a href="/resume-scanner" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w1"></div><div class="mock-bar w3"></div><div class="mock-bar w2"></div><div class="mock-bar accent"></div></div></div>
-      <div class="card-day">Day 02</div>
-      <h3>Tab Graveyard</h3>
-      <p>Chrome extension that captures every closed tab — searchable, grouped by date, with bulk restore and JSON export.</p>
-      <div class="card-footer"><span class="card-tag">Chrome Extension</span><a href="https://deepanshuvermaa.github.io/tab-graveyard/" target="_blank" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w3"></div><div class="mock-bar accent"></div><div class="mock-bar w1"></div><div class="mock-bar w2"></div></div></div>
-      <div class="card-day">Day 03</div>
-      <h3>Commit Message Generator</h3>
-      <p>CLI tool that reads your staged git diff and generates 3 conventional commit message options. Pick one, it commits.</p>
-      <div class="card-footer"><span class="card-tag">Node.js CLI</span><a href="https://github.com/deepanshuvermaa/commitgen" target="_blank" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w2"></div><div class="mock-bar w3"></div><div class="mock-bar w1"></div><div class="mock-bar accent"></div></div></div>
-      <div class="card-day">Day 04</div>
-      <h3>DNS Lookup Tool</h3>
-      <p>Query any domain's DNS records via Cloudflare DoH. Supports A, AAAA, CNAME, MX, TXT, NS, SOA with bulk lookup.</p>
-      <div class="card-footer"><span class="card-tag">Static</span><a href="https://deepanshuvermaa.github.io/dns-lookup-tool/" target="_blank" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar accent"></div><div class="mock-bar w2"></div><div class="mock-bar w1"></div><div class="mock-bar w3"></div></div></div>
-      <div class="card-day">Day 05</div>
-      <h3>Portfolio Roaster</h3>
-      <p>Paste your portfolio URL. AI roasts it across design, content, UX, mobile, and CTA — with fixes for each.</p>
-      <div class="card-footer"><span class="card-tag">Express + AI</span><a href="/portfolio-roaster" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w1"></div><div class="mock-bar w2"></div><div class="mock-bar accent"></div><div class="mock-bar w3"></div></div></div>
-      <div class="card-day">Day 06</div>
-      <h3>Regex Tester</h3>
-      <p>Real-time regex matching with highlighted groups. Click "Explain" for a plain-English AI breakdown of any pattern.</p>
-      <div class="card-footer"><span class="card-tag">Client + AI</span><a href="/regex-tester" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w3"></div><div class="mock-bar w1"></div><div class="mock-bar w2"></div><div class="mock-bar accent"></div></div></div>
-      <div class="card-day">Day 07</div>
-      <h3>Cold Email Personalizer</h3>
-      <p>Input prospect details + your value prop. Get 2 hyper-personalized email variants with spam score analysis.</p>
-      <div class="card-footer"><span class="card-tag">Express + AI</span><a href="/cold-email" class="card-link">Visit →</a></div>
-    </div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 01</span><span class="card-tag">AI + PDF</span></div><h3>Resume Scanner</h3><p>Upload a PDF resume, get ATS score, missing keywords, weak verbs, and prioritized fixes against any target role.</p><a href="/resume-scanner" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 02</span><span class="card-tag">Chrome Ext</span></div><h3>Tab Graveyard</h3><p>Chrome extension that captures every closed tab — searchable, grouped by date, bulk restore, JSON export.</p><a href="https://deepanshuvermaa.github.io/tab-graveyard/" target="_blank" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 03</span><span class="card-tag">No AI</span></div><h3>DNS Lookup</h3><p>Query any domain's DNS records via Cloudflare DoH. A, AAAA, CNAME, MX, TXT, NS, SOA with bulk lookup.</p><a href="https://deepanshuvermaa.github.io/dns-lookup-tool/" target="_blank" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 04</span><span class="card-tag">AI</span></div><h3>Portfolio Roaster</h3><p>Paste your portfolio URL. Get scored across design, content, UX, mobile, and CTA — with specific fixes.</p><a href="/portfolio-roaster" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 05</span><span class="card-tag">AI</span></div><h3>Code Review Bot</h3><p>Paste code in any language. Get severity-ranked issues with line numbers, categories, and fixes.</p><a href="/code-review" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 06</span><span class="card-tag">AI</span></div><h3>SQL Explainer</h3><p>Paste any SQL query. Get plain-English summary, step-by-step breakdown, performance notes, optimized version.</p><a href="/sql-explainer" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 07</span><span class="card-tag">AI</span></div><h3>Cold Email Personalizer</h3><p>Input prospect details + your value prop. Get 2 hyper-personalized email variants with improvement tips.</p><a href="/cold-email" class="card-link">Open tool →</a></div>
   </div>
 </section>
 
 <section class="section">
-  <span class="section-label">Phase 2 — Depth</span>
-  <h2>Week two builds</h2>
-  <p>Tools that show systems thinking and technical depth.</p>
-
+  <span class="section-label">Infrastructure & Security</span>
+  <h2>Infra-aware tools</h2>
+  <p>Monitoring, security analysis, and systems understanding — what senior engineers care about.</p>
   <div class="grid">
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w2"></div><div class="mock-bar accent"></div><div class="mock-bar w1"></div><div class="mock-bar w3"></div></div></div>
-      <div class="card-day">Day 08</div>
-      <h3>Code Review Bot</h3>
-      <p>Paste code in any language. AI returns severity-ranked issues with line numbers, categories, and fixes.</p>
-      <div class="card-footer"><span class="card-tag">Express + AI</span><a href="/code-review" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w1"></div><div class="mock-bar w3"></div><div class="mock-bar accent"></div><div class="mock-bar w2"></div></div></div>
-      <div class="card-day">Day 09</div>
-      <h3>SQL Query Explainer</h3>
-      <p>Paste any SQL query. Get a plain-English summary, step-by-step breakdown, performance notes, and optimized version.</p>
-      <div class="card-footer"><span class="card-tag">Express + AI</span><a href="/sql-explainer" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar accent"></div><div class="mock-bar w2"></div><div class="mock-bar w3"></div><div class="mock-bar w1"></div></div></div>
-      <div class="card-day">Day 10</div>
-      <h3>Salary Negotiation Scripts</h3>
-      <p>Input your offer details. Get a complete negotiation playbook — opening, anchoring, objection handling, and email draft.</p>
-      <div class="card-footer"><span class="card-tag">Express + AI</span><a href="/salary-negotiation" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w2"></div><div class="mock-bar w1"></div><div class="mock-bar w3"></div><div class="mock-bar accent"></div></div></div>
-      <div class="card-day">Day 11</div>
-      <h3>Interview Question Generator</h3>
-      <p>Paste a job description. Get tailored questions with difficulty, what they test, good signals, and red flags.</p>
-      <div class="card-footer"><span class="card-tag">Express + AI</span><a href="/interview-questions" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w3"></div><div class="mock-bar w2"></div><div class="mock-bar accent"></div><div class="mock-bar w1"></div></div></div>
-      <div class="card-day">Day 12</div>
-      <h3>README Generator</h3>
-      <p>Paste a GitHub URL or code structure. AI generates a complete, professional README.md with all sections.</p>
-      <div class="card-footer"><span class="card-tag">Express + AI</span><a href="/readme-generator" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w1"></div><div class="mock-bar accent"></div><div class="mock-bar w2"></div><div class="mock-bar w3"></div></div></div>
-      <div class="card-day">Day 13</div>
-      <h3>Standup Generator</h3>
-      <p>Input yesterday/today/blockers. Get 3 format variants — Slack-ready, meeting-ready, and minimal bullets.</p>
-      <div class="card-footer"><span class="card-tag">Express + AI</span><a href="/standup-generator" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w2"></div><div class="mock-bar w3"></div><div class="mock-bar accent"></div><div class="mock-bar w1"></div></div></div>
-      <div class="card-day">Day 14</div>
-      <h3>Tech Stack Detector</h3>
-      <p>Enter any URL. Detects frontend framework, CSS, CDN, analytics, backend, and hosting — no AI, pure rules engine.</p>
-      <div class="card-footer"><span class="card-tag">Express + Cheerio</span><a href="/tech-stack-detector" class="card-link">Visit →</a></div>
-    </div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 08</span><span class="card-tag">No AI</span></div><h3>Tech Stack Detector</h3><p>Enter any URL. Detects framework, CSS, CDN, analytics, backend, hosting — pure rule-based, no AI.</p><a href="/tech-stack-detector" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 09</span><span class="card-tag">No AI</span></div><h3>API Health Dashboard</h3><p>Monitor endpoints: uptime, response time, SSL expiry. Auto-checks every 30s with sparkline history.</p><a href="/api-health" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 10</span><span class="card-tag">No AI</span></div><h3>HTTP Header Analyzer</h3><p>Security grade (A+ to F) for any URL. Checks HSTS, CSP, CORS, X-Frame-Options with fix recommendations.</p><a href="/http-headers" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 11</span><span class="card-tag">No AI</span></div><h3>Webhook Tester</h3><p>Generate a unique URL. Send any HTTP request to it. Inspect method, headers, body, query params in real-time.</p><a href="/webhook-tester" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 12</span><span class="card-tag">No AI</span></div><h3>Bundle Size Analyzer</h3><p>Paste package.json. See total install size, heavy deps highlighted, lighter alternatives suggested.</p><a href="/bundle-analyzer" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 13</span><span class="card-tag">AI</span></div><h3>Spam Mail Detector</h3><p>Paste email content. AI scores spam probability with reasons — urgency language, suspicious links, bulk headers.</p><a href="/spam-detector" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 14</span><span class="card-tag">No AI</span></div><h3>URL Shortener + Analytics</h3><p>Shorten links with full click tracking — referrer, device, browser, country, unique vs repeat visitors.</p><a href="/url-shortener" class="card-link">Open tool →</a></div>
   </div>
 </section>
 
 <section class="section">
-  <span class="section-label">Phase 3 — Authority</span>
-  <h2>Week three builds</h2>
-  <p>Products that demonstrate product thinking and design craft.</p>
-
+  <span class="section-label">Design & Algorithms</span>
+  <h2>Client-side tools</h2>
+  <p>No server needed. Pure algorithms, visual builders, and interactive playgrounds.</p>
   <div class="grid">
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar accent"></div><div class="mock-bar w1"></div><div class="mock-bar w2"></div><div class="mock-bar w3"></div></div></div>
-      <div class="card-day">Day 15</div>
-      <h3>Developer Excuse Generator</h3>
-      <p>Pick a situation, set seriousness level. Get a technical excuse with jargon version, blame target, and evidence.</p>
-      <div class="card-footer"><span class="card-tag">Express + AI</span><a href="/dev-excuse" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w2"></div><div class="mock-bar w1"></div><div class="mock-bar accent"></div><div class="mock-bar w3"></div></div></div>
-      <div class="card-day">Day 16</div>
-      <h3>Color Palette Extractor</h3>
-      <p>Drop an image. Extracts dominant colors via median-cut quantization with WCAG contrast checks and CSS/Tailwind export.</p>
-      <div class="card-footer"><span class="card-tag">Static</span><a href="https://deepanshuvermaa.github.io/color-palette-extractor/" target="_blank" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w3"></div><div class="mock-bar accent"></div><div class="mock-bar w1"></div><div class="mock-bar w2"></div></div></div>
-      <div class="card-day">Day 17</div>
-      <h3>Loading Screen Builder</h3>
-      <p>Visual editor for fake loading screens. 5 presets, custom messages, export as self-contained HTML.</p>
-      <div class="card-footer"><span class="card-tag">Static</span><a href="https://deepanshuvermaa.github.io/loading-screen-builder/" target="_blank" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w1"></div><div class="mock-bar w2"></div><div class="mock-bar w3"></div><div class="mock-bar accent"></div></div></div>
-      <div class="card-day">Day 18</div>
-      <h3>Startup Idea Validator</h3>
-      <p>Describe your idea. Get a 7-dimension radar score, competitor analysis, MVP scope, and a Pursue/Pivot/Park verdict.</p>
-      <div class="card-footer"><span class="card-tag">Express + AI</span><a href="/startup-validator" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w2"></div><div class="mock-bar accent"></div><div class="mock-bar w3"></div><div class="mock-bar w1"></div></div></div>
-      <div class="card-day">Day 19</div>
-      <h3>Markdown Resume Builder</h3>
-      <p>Split-pane editor with live preview. 3 themes, ATS mode, PDF export via print, localStorage persistence.</p>
-      <div class="card-footer"><span class="card-tag">Static</span><a href="https://deepanshuvermaa.github.io/markdown-resume-builder/" target="_blank" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar w3"></div><div class="mock-bar w1"></div><div class="mock-bar accent"></div><div class="mock-bar w2"></div></div></div>
-      <div class="card-day">Day 20</div>
-      <h3>Dev Jokes Generator</h3>
-      <p>Pick a category and nerd level. Get a joke with flip-card reveal, technical explanation, and share as image.</p>
-      <div class="card-footer"><span class="card-tag">Express + AI</span><a href="/dev-jokes" class="card-link">Visit →</a></div>
-    </div>
-
-    <div class="card">
-      <div class="card-screenshot"><div class="browser-dots"><span></span><span></span><span></span></div><div class="mock-content"><div class="mock-bar accent"></div><div class="mock-bar w2"></div><div class="mock-bar w1"></div><div class="mock-bar w3"></div></div></div>
-      <div class="card-day">Day 21</div>
-      <h3>21-Day Build Tracker</h3>
-      <p>Track your own 21-day challenge. Status cards, streak counter, tech tags, notes, and full JSON export/import.</p>
-      <div class="card-footer"><span class="card-tag">Static</span><a href="https://deepanshuvermaa.github.io/build-tracker/" target="_blank" class="card-link">Visit →</a></div>
-    </div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 15</span><span class="card-tag">Algorithm</span></div><h3>Color Palette Extractor</h3><p>Drop an image. Median-cut quantization extracts dominant colors with WCAG contrast checks and CSS/Tailwind export.</p><a href="https://deepanshuvermaa.github.io/color-palette-extractor/" target="_blank" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 16</span><span class="card-tag">Visual</span></div><h3>Markdown Resume Builder</h3><p>Split-pane editor with live preview. 3 themes, ATS mode, PDF export, localStorage persistence.</p><a href="https://deepanshuvermaa.github.io/markdown-resume-builder/" target="_blank" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 17</span><span class="card-tag">Visual</span></div><h3>Database Schema Designer</h3><p>Drag-and-drop ERD builder. Create tables, define columns, draw relationships. Export as PostgreSQL/MySQL.</p><a href="https://deepanshuvermaa.github.io/db-schema-designer/" target="_blank" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 18</span><span class="card-tag">Visual</span></div><h3>Cron Expression Builder</h3><p>Visual cron builder with human-readable preview, next 10 run times, timezone support, and reverse parsing.</p><a href="https://deepanshuvermaa.github.io/cron-builder/" target="_blank" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 19</span><span class="card-tag">Algorithm</span></div><h3>JSON Diff Viewer</h3><p>Paste two JSON objects. Visual tree diff with added/removed/changed highlighting and JSON Patch export.</p><a href="https://deepanshuvermaa.github.io/json-diff-viewer/" target="_blank" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 20</span><span class="card-tag">Interactive</span></div><h3>Rate Limiter Playground</h3><p>Interactive visualization of token bucket, sliding window, and fixed window algorithms with live traffic simulation.</p><a href="https://deepanshuvermaa.github.io/rate-limiter-playground/" target="_blank" class="card-link">Open tool →</a></div>
+    <div class="card"><div class="card-top"><span class="card-day">Day 21</span><span class="card-tag">AI</span></div><h3>Interview Question Generator</h3><p>Paste a JD. Get targeted technical questions with difficulty, evaluation criteria, and follow-ups. No HR fluff.</p><a href="/interview-questions" class="card-link">Open tool →</a></div>
   </div>
 </section>
 
-<footer>
-  <p>Built by Deepanshu Verma · 21 projects in 21 days · 2025</p>
-</footer>
-
+<footer><p>Built by Deepanshu Verma · 21 projects in 21 days · Each solves a real problem</p></footer>
 </body>
 </html>

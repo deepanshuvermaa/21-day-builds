@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>URL Shortener</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#222;min-height:100vh}
+.container{max-width:800px;margin:0 auto;padding:2rem 1rem}
+h1{font-size:2rem;margin-bottom:.5rem}
+.accent{color:#f69251}
+.hero p{color:#555;margin-bottom:1.5rem;line-height:1.6}
+.note{font-size:.75rem;color:#999;margin-top:.25rem}
+.form{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:2rem}
+.form input{padding:.6rem .8rem;border:1px solid #ddd;border-radius:6px;font-size:.9rem}
+.form input:first-child{flex:1;min-width:200px}
+.form input:nth-child(2){width:140px}
+.btn{background:#f69251;color:#fff;border:none;padding:.6rem 1.2rem;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem}
+.btn:hover{background:#e07e3a}
+.result{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:1rem;margin-bottom:2rem;display:none;align-items:center;gap:.5rem}
+.result a{color:#f69251;word-break:break-all;font-weight:600}
+.copy-btn{font-size:.75rem;padding:.4rem .6rem}
+h2{font-size:1.3rem;margin-bottom:1rem}
+.url-list{list-style:none}
+.url-item{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:.8rem 1rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.url-item:hover{border-color:#f69251}
+.url-item .code{font-weight:600;color:#f69251}
+.url-item .clicks{font-size:.8rem;color:#777}
+.stats-panel{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:1.5rem;margin-top:1rem;display:none}
+.stats-panel h3{margin-bottom:1rem}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:#f7f7f7;border-radius:6px;padding:.8rem;text-align:center}
+.stat-card .num{font-size:1.5rem;font-weight:700;color:#f69251}
+.stat-card .label{font-size:.75rem;color:#777}
+.bar-chart{display:flex;align-items:flex-end;gap:3px;height:100px;margin-bottom:1.5rem;padding:.5rem;background:#f7f7f7;border-radius:6px}
+.bar{background:#f69251;border-radius:3px 3px 0 0;min-width:8px;flex:1;position:relative}
+.bar:hover::after{content:attr(data-label);position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:.6rem;white-space:nowrap;background:#333;color:#fff;padding:2px 4px;border-radius:3px}
+.breakdown{margin-bottom:1rem}
+.breakdown h4{font-size:.85rem;margin-bottom:.4rem;color:#555}
+.breakdown li{font-size:.8rem;color:#444;padding:.2rem 0;list-style:none;display:flex;justify-content:space-between}
+.back-btn{font-size:.8rem;margin-bottom:1rem;cursor:pointer;color:#f69251;border:none;background:none;font-weight:600}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <h1><span class="accent">URL Shortener</span> with Analytics</h1>
+    <p>Shorten any link and track every click — see devices, browsers, countries, referrers, and more in real time.</p>
+    <p class="note">⚠️ Data is stored in-memory and resets on server restart.</p>
+  </div>
+  <div class="form">
+    <input type="url" id="urlInput" placeholder="Paste your long URL here" required>
+    <input type="text" id="aliasInput" placeholder="Custom alias">
+    <button class="btn" onclick="shorten()">Shorten</button>
+  </div>
+  <div class="result" id="result">
+    <span>Short URL:</span><a id="shortLink" href="#" target="_blank"></a>
+    <button class="btn copy-btn" onclick="copyUrl()">Copy</button>
+  </div>
+  <div id="dashboard">
+    <h2>Dashboard</h2>
+    <ul class="url-list" id="urlList"></ul>
+  </div>
+  <div class="stats-panel" id="statsPanel">
+    <button class="back-btn" onclick="hideStats()">← Back to Dashboard</button>
+    <h3 id="statsTitle"></h3>
+    <div class="stat-grid" id="statGrid"></div>
+    <h4>Clicks over time</h4>
+    <div class="bar-chart" id="barChart"></div>
+    <div id="breakdowns"></div>
+  </div>
+</div>
+<script>
+async function shorten(){
+  const url=document.getElementById('urlInput').value;
+  const alias=document.getElementById('aliasInput').value;
+  if(!url)return;
+  const r=await fetch('/url-shortener/api/shorten',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,alias})});
+  const d=await r.json();
+  if(!r.ok)return alert(d.error);
+  const link=location.origin+'/'+d.code;
+  document.getElementById('shortLink').href=link;
+  document.getElementById('shortLink').textContent=link;
+  document.getElementById('result').style.display='flex';
+  document.getElementById('urlInput').value='';
+  document.getElementById('aliasInput').value='';
+  loadUrls();
+}
+function copyUrl(){navigator.clipboard.writeText(document.getElementById('shortLink').href)}
+async function loadUrls(){
+  const r=await fetch('/url-shortener/api/urls');
+  const list=await r.json();
+  const ul=document.getElementById('urlList');
+  ul.innerHTML=list.map(u=>`<li class="url-item" onclick="showStats('${u.code}')"><div><span class="code">/${u.code}</span> → ${u.url.substring(0,50)}${u.url.length>50?'...':''}</div><span class="clicks">${u.clickCount} clicks</span></li>`).join('');
+}
+async function showStats(code){
+  const r=await fetch(`/api/urls/${code}/stats`);
+  const d=await r.json();
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('result').style.display='none';
+  const panel=document.getElementById('statsPanel');
+  panel.style.display='block';
+  document.getElementById('statsTitle').textContent=`/${d.code} → ${d.url}`;
+  document.getElementById('statGrid').innerHTML=`
+    <div class="stat-card"><div class="num">${d.totalClicks}</div><div class="label">Total Clicks</div></div>
+    <div class="stat-card"><div class="num">${d.uniqueVisitors}</div><div class="label">Unique Visitors</div></div>
+    <div class="stat-card"><div class="num">${d.repeatVisitors}</div><div class="label">Repeat Visitors</div></div>`;
+  // Bar chart - clicks per day
+  const days={};
+  d.clicks.forEach(c=>{const day=new Date(c.timestamp).toLocaleDateString();days[day]=(days[day]||0)+1});
+  const vals=Object.values(days);const max=Math.max(...vals,1);
+  document.getElementById('barChart').innerHTML=Object.entries(days).map(([day,count])=>`<div class="bar" style="height:${(count/max)*100}%" data-label="${day}: ${count}"></div>`).join('');
+  // Breakdowns
+  const agg=(key)=>{const m={};d.clicks.forEach(c=>{m[c[key]]=(m[c[key]]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1])};
+  document.getElementById('breakdowns').innerHTML=['referrer','device','browser','country'].map(k=>`<div class="breakdown"><h4>${k[0].toUpperCase()+k.slice(1)}s</h4><ul>${agg(k).map(([n,c])=>`<li><span>${n}</span><span>${c}</span></li>`).join('')}</ul></div>`).join('');
+}
+function hideStats(){
+  document.getElementById('statsPanel').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  loadUrls();
+}
+loadUrls();
+</script>
+</body>
+</html>

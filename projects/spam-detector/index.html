@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpamShield — AI Spam Detector</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1a1a;line-height:1.6}
+.accent{color:#f69251}
+.btn{background:#f69251;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.container{max-width:900px;margin:0 auto;padding:0 20px}
+
+/* Hero */
+.hero{text-align:center;padding:80px 20px 40px}
+.hero h1{font-size:2.5rem;font-weight:700;margin-bottom:12px}
+.hero p{font-size:1.1rem;color:#555;max-width:600px;margin:0 auto 24px}
+.badge{display:inline-block;background:#fff3eb;color:#f69251;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:600;margin-bottom:16px}
+
+/* App */
+.app{background:#fff;border-radius:12px;padding:32px;margin-bottom:40px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+textarea{width:100%;height:200px;border:2px solid #e5e5e5;border-radius:8px;padding:14px;font-family:'Inter',monospace;font-size:.9rem;resize:vertical;transition:border-color .2s}
+textarea:focus{outline:none;border-color:#f69251}
+.actions{display:flex;gap:12px;margin-top:16px;align-items:center}
+#status{font-size:.9rem;color:#555}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
+.stat{background:#f7f7f7;border-radius:8px;padding:16px;text-align:center}
+.stat .num{font-size:1.8rem;font-weight:700}
+.stat .label{font-size:.8rem;color:#777;margin-top:4px}
+
+/* Table */
+.table-wrap{overflow-x:auto;margin-top:20px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:12px;text-align:left;border-bottom:1px solid #eee}
+th{background:#f7f7f7;font-weight:600}
+.score-bar{width:60px;height:8px;background:#e5e5e5;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px}
+.score-fill{height:100%;border-radius:4px}
+.verdict-spam{color:#e53e3e;font-weight:600}
+.verdict-suspicious{color:#d69e2e;font-weight:600}
+.verdict-safe{color:#38a169;font-weight:600}
+.bulk-bar{display:flex;gap:12px;align-items:center;margin-top:16px;padding:12px;background:#fff3eb;border-radius:8px}
+
+/* Footer */
+.footer{text-align:center;padding:40px 20px;color:#999;font-size:.85rem}
+.future-note{background:#fff;border-left:4px solid #f69251;padding:16px 20px;border-radius:0 8px 8px 0;margin:24px 0;font-size:.9rem;color:#555}
+</style>
+</head>
+<body>
+<div class="container">
+  <section class="hero">
+    <div class="badge">DEMO VERSION</div>
+    <h1>Spam<span class="accent">Shield</span></h1>
+    <p>AI-powered spam detection that analyzes email headers, language patterns, and sender signals to protect your inbox.</p>
+    <p style="font-size:.9rem;color:#777">Paste raw emails below to analyze them for spam signals.</p>
+  </section>
+
+  <section class="app">
+    <label style="font-weight:600;display:block;margin-bottom:8px">Paste email(s) — separate multiple with <code>---</code></label>
+    <textarea id="input" placeholder="From: deals@totallylegit.biz&#10;Subject: YOU WON $1,000,000!!!&#10;X-Mailer: BulkSender Pro&#10;&#10;Dear Winner, click here immediately to claim...&#10;---&#10;From: colleague@company.com&#10;Subject: Meeting tomorrow&#10;&#10;Hi, just confirming our 2pm meeting tomorrow."></textarea>
+    <div class="actions">
+      <button class="btn" id="analyzeBtn" onclick="analyze()">Analyze Emails</button>
+      <span id="status"></span>
+    </div>
+
+    <div id="results" style="display:none">
+      <div class="stats">
+        <div class="stat"><div class="num" id="statTotal">0</div><div class="label">Analyzed</div></div>
+        <div class="stat"><div class="num accent" id="statSpam">0</div><div class="label">Spam</div></div>
+        <div class="stat"><div class="num" id="statSuspicious" style="color:#d69e2e">0</div><div class="label">Suspicious</div></div>
+        <div class="stat"><div class="num" id="statSafe" style="color:#38a169">0</div><div class="label">Safe</div></div>
+      </div>
+
+      <div class="bulk-bar">
+        <label><input type="checkbox" id="selectAll" onchange="toggleAll()"> Select All Spam</label>
+        <button class="btn" style="padding:8px 16px;font-size:.85rem" onclick="markSpam()">Mark as Spam</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>Subject</th><th>Sender</th><th>Score</th><th>Verdict</th><th>Reasons</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="future-note">
+      <strong>🚀 Production Version:</strong> Would integrate Gmail API with OAuth 2.0 for direct inbox access, real-time scanning, and one-click bulk deletion.
+    </div>
+  </section>
+</div>
+
+<footer class="footer">SpamShield Demo — Built with AI analysis</footer>
+
+<script>
+async function analyze() {
+  const raw = document.getElementById('input').value.trim();
+  if (!raw) return;
+  const btn = document.getElementById('analyzeBtn');
+  const status = document.getElementById('status');
+  btn.disabled = true;
+  status.textContent = 'Analyzing...';
+
+  const emails = raw.split(/\n---\n/).map(e => e.trim()).filter(Boolean);
+
+  try {
+    const res = await fetch('/spam-detector/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emails })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderResults(data.results);
+    status.textContent = '';
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+  }
+  btn.disabled = false;
+}
+
+function renderResults(results) {
+  document.getElementById('results').style.display = 'block';
+  const spam = results.filter(r => r.verdict === 'spam').length;
+  const suspicious = results.filter(r => r.verdict === 'suspicious').length;
+  const safe = results.filter(r => r.verdict === 'safe').length;
+  document.getElementById('statTotal').textContent = results.length;
+  document.getElementById('statSpam').textContent = spam;
+  document.getElementById('statSuspicious').textContent = suspicious;
+  document.getElementById('statSafe').textContent = safe;
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = results.map((r, i) => {
+    const color = r.score >= 70 ? '#e53e3e' : r.score >= 40 ? '#d69e2e' : '#38a169';
+    return `<tr>
+      <td><input type="checkbox" class="row-cb" data-i="${i}" ${r.verdict === 'spam' ? 'checked' : ''}></td>
+      <td>${esc(r.subject || 'N/A')}</td>
+      <td>${esc(r.sender || 'Unknown')}</td>
+      <td><span class="score-bar"><span class="score-fill" style="width:${r.score}%;background:${color}"></span></span>${r.score}</td>
+      <td class="verdict-${r.verdict}">${r.verdict.toUpperCase()}</td>
+      <td>${(r.reasons || []).map(x => esc(x)).join('<br>')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function toggleAll() { document.querySelectorAll('.row-cb').forEach(cb => cb.checked = document.getElementById('selectAll').checked); }
+function markSpam() {
+  const checked = document.querySelectorAll('.row-cb:checked').length;
+  if (checked) alert(`${checked} email(s) marked as spam! (simulated — in production this would move them to spam folder via Gmail API)`);
+}
+</script>
+</body>
+</html>
