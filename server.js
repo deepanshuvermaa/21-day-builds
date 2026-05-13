@@ -161,7 +161,7 @@ app.post('/spam-detector/api/analyze', async (req, res) => {
 // --- URL SHORTENER ---
 const urlStore = new Map();
 const clickStore = new Map();
-import { parse as parseUA } from 'ua-parser-js';
+import UAParser from 'ua-parser-js';
 
 app.post('/url-shortener/api/shorten', (req, res) => {
   try {
